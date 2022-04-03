@@ -1,0 +1,134 @@
+name: Package
+env:
+  PIP_CACHE_DIR: .pip
+  PYTHONPATH: src
+on:
+  release:
+    types: ["published"]
+
+jobs:
+  build-sdist:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Set Up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+
+      - name: Upgrade Pip
+        run: python -m pip install --upgrade pip
+
+      - name: Upgrade Build
+        run: pip install --upgrade build
+
+      - name: Install Python Dependencies
+        run: pip install -IU -r ./.requirements/build.txt
+
+      - name: Build sdist
+        run: ./tools/build/build-sdist.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+  build-wheel-linux:
+    runs-on: ubuntu-20.04
+    needs: build-sdist
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: [x86_64, aarch64]
+        platform: [manylinux, musllinux]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU for multi-arch build
+        uses: docker/setup-qemu-action@v1
+
+      - name: Build Packages
+        uses: pypa/cibuildwheel@v2.4.0
+        env:
+          CIBW_BUILD: cp{38,39,310}-${{matrix.platform}}_${{matrix.arch}}
+          CIBW_ARCHS_LINUX: ${{matrix.arch}}
+          CIBW_ENVIRONMENT: >-
+            PATH=/usr/local/cargo/bin:$PATH
+            CARGO_HOME=/usr/local/cargo
+            RUSTUP_HOME=/usr/local/rustup
+            SETUP_RUST_PLATFORM=${{matrix.platform}}-${{matrix.arch}}
+
+      - name: Save Artefacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheel_${{ matrix.platform }}_${{ matrix.arch }}
+          path: wheelhouse/*.whl
+
+  build-wheel-macos:
+    runs-on: macos-11
+    needs: build-sdist
+    strategy:
+      fail-fast: true
+      matrix:
+        # arch: [x86_64, arm64]
+        arch: [x86_64]
+        platform: [macosx]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Build Packages
+        uses: pypa/cibuildwheel@v2.4.0
+        env:
+          SETUP_RUST_PLATFORM: ${{matrix.platform}}-${{matrix.arch}}
+          CIBW_BUILD: cp{38,39,310}-${{matrix.platform}}_${{matrix.arch}}
+          CIBW_ARCHS: ${{matrix.arch}}
+          CIBW_ENVIRONMENT: >-
+            PATH=$HOME/.cargo/bin:$PATH
+            CARGO_HOME=$HOME/.cargo
+            RUSTUP_HOME=$HOME/.rustup
+
+      - name: Save Artefacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheel_${{ matrix.platform }}_${{ matrix.arch }}
+          path: wheelhouse/*.whl
+
+  publish:
+    runs-on: ubuntu-20.04
+    needs:
+      - build-sdist
+      - build-wheel-linux
+      - build-wheel-macos
+    steps:
+      - name: Download Artefacts
+        uses: actions/download-artifact@v3
+        with:
+          path: dist/
+
+      - name: Prepare dist/
+        run: |
+          mv dist/*/*.whl dist/
+          mv dist/*/*.tar.gz dist/
+          find dist/* -type d | xargs rm -r
+
+      - name: Show Artefacts
+        run: ls -lhR dist/
+
+      - name: Publish distribution 📦 to Test PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          print_hash: true
+          skip_existing: true
+
+      - name: Publish distribution 📦 to PyPI
+        if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          print_hash: true

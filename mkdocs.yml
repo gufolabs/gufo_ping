@@ -1,0 +1,59 @@
+site_name: Gufo Labs Ping
+site_description: Gufo Labs Ping Documentation
+site_author: Gufo Labs
+site_url: "https://docs.gufolabs.com/gufo_ping/"
+copyright: "&copy; 2022, Gufo Labs"
+site_dir: dist/docs/
+repo_url: https://github.com/gufolabs/gufo_ping/
+repo_name: GitHub
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Examples:
+      - Overview: examples/index.md
+      - Single Request: examples/single.md
+      - Series of Requests: examples/series.md
+  - Reference: reference/
+  - Developers' Guide:
+      - Developer's Environment: environment.md
+      - Building and Testing: testing.md
+      - Code Quality: codequality.md
+      - Code Base: codebase.md
+      - Contributing Guide: CONTRIBUTING.md
+      - Code of Conduct: CODE_OF_CONDUCT.md
+  - Supported Standards: standards.md
+  - FAQ: faq.md
+  - Changes: changes.md
+  - License: license.md
+  # Users
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/logo.png
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_doc_stubs.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_source: false
+            show_submodules: false
+      watch:
+        - src/gufo/
+        - examples/
+markdown_extensions:
+  - toc:
+      permalink: True
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: True
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

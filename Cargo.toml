@@ -1,0 +1,21 @@
+[package]
+edition = "2021"
+name = "gufo_ping"
+version = "0.1.0"
+
+# See more keys and their definitions 
+# at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
+name = "gufo_ping"
+
+[dependencies]
+byteorder = "1.4"
+coarsetime = "0.1"
+internet-checksum = "0.2"
+pyo3 = {version = "0.16.1", features = ["extension-module"]}
+rand = "0.8"
+socket2 = {version = "0.4", features = ["all"]}
+
+[profile.release]
+strip = "debuginfo"
