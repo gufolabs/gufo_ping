@@ -34,6 +34,8 @@ class PingSocket(object):
             Use OS defaults when empty.
         coarse: Use CLOCK_MONOTONIC_COARSE when set,
             fall back to CLOCK_MONOTONIC otherwise.
+        accelerated: Enable platform-dependend accelerated
+            socket processing.
     """
 
     def __init__(
@@ -46,6 +48,7 @@ class PingSocket(object):
         send_buffer_size: Optional[int] = None,
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
+        accelerated: bool = True,
     ):
         self.__force_del = False
         if afi != 4 and afi != 6:
@@ -70,6 +73,8 @@ class PingSocket(object):
             self.__sock.set_recv_buffer_size(recv_buffer_size)
         if coarse:
             self.__sock.set_coarse(True)
+        if accelerated:
+            self.__sock.set_accelerated(True)
         self.__timeout = timeout
         self.__sock_fd = self.__sock.get_fd()
         #  <addr>-<request id>-<seq> -> future

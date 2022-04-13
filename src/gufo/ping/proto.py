@@ -79,6 +79,16 @@ class SocketProto(Protocol):
         """
         ...
 
+    def set_accelerated(self, a: bool) -> None:
+        """
+        Enable platform-dependend raw socket processing.
+
+        Args:
+            a: Enable or disable an acceleration.
+                * True - enable, when platform supports acceleration.
+                * False - disable the acceleration.
+        """
+
     def get_fd(self) -> int:  # @todo: Shold be FileDescriptorLike
         """
         Get socket's file descriptor.

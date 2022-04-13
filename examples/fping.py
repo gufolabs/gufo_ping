@@ -16,7 +16,7 @@ from gufo.ping import Ping
 # Maximal amounts of CPU used
 MAX_CPU = 128
 # Number of worker tasks within every thread
-N_TASKS = 30
+N_TASKS = 50
 
 
 def main(path: str) -> None:

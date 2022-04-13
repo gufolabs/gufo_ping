@@ -143,6 +143,16 @@ impl SocketWrapper {
         Ok(())
     }
 
+    /// Enable accelerated socket processing
+    fn set_accelerated(&self, a: bool) -> PyResult<()> {
+        if a {
+            self.enable_accelerated()?
+        } else {
+            self.disable_accelerated()?
+        }
+        Ok(())
+    }
+
     /// Get socket's file descriptor
     fn get_fd(&self) -> PyResult<i32> {
         Ok(self.io.as_raw_fd())
@@ -265,5 +275,46 @@ impl SocketWrapper {
             // CLOCK_MONOTONIC
             self.start.elapsed().as_nanos() as u64
         }
+    }
+
+    /// Attach cBPF filter to socket to reduce context switches
+    #[cfg(target_os = "linux")]
+    fn enable_accelerated(&self) -> std::io::Result<()> {
+        #[inline]
+        fn op(code: u16, jt: u8, jf: u8, k: u32) -> sock_filter {
+            sock_filter { code, jt, jf, k }
+        }
+
+        use libc::sock_filter;
+
+        let filters = [
+            op(0x30, 0, 0, 0x00000014),                           // ldb [20]
+            op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x0, drop
+            op(0x20, 0, 0, 0x0000001c),                           // ld [28]
+            op(0x15, 0, 3, (self.signature >> 32) as u32),        // jne #sig1, drop
+            op(0x20, 0, 0, 0x00000020),                           // ld [32]
+            op(0x15, 0, 1, (self.signature & 0xFFFFFFFF) as u32), // jne #sig2, drop
+            op(0x06, 0, 0, 0xffffffff),                           // ret #-1
+            op(0x06, 0, 0, 0000000000),                           // drop: ret #0
+        ];
+        self.io.attach_filter(&filters)?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    fn enable_accelerated(&self) -> std::io::Result<()> {
+        Ok(())
+    }
+
+    /// Remove BPF filter from socket
+    #[cfg(target_os = "linux")]
+    fn disable_accelerated(&self) -> std::io::Result<()> {
+        self.io.detach_filter()?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    fn disable_accelerated(&self) -> std::io::Result<()> {
+        Ok(())
     }
 }
