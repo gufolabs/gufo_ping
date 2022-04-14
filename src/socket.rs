@@ -64,6 +64,7 @@ pub(crate) struct SocketWrapper {
     sessions: BTreeSet<Session>,
     start: Instant,
     coarse: bool,
+    buf: [MaybeUninit<u8>; MAX_SIZE],
 }
 
 #[pymethods]
@@ -91,6 +92,7 @@ impl SocketWrapper {
             timeout: 1_000_000_000,
             start: Instant::now(),
             coarse: false,
+            buf: unsafe { MaybeUninit::uninit().assume_init() },
         })
     }
 
@@ -183,9 +185,10 @@ impl SocketWrapper {
             ts,
             size - self.proto.ip_header_size,
         );
-        let buf = Vec::<u8>::try_from(&pkt).map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let n = pkt.write(&mut self.buf);
+        let buf = unsafe { Self::slice_assume_init_ref(&self.buf[..n]) };
         self.io
-            .send_to(&buf, &to_addr)
+            .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
         self.sessions
             .insert(Session::new(&pkt.get_sid(addr), ts + self.timeout));
@@ -195,17 +198,16 @@ impl SocketWrapper {
     /// Receive all pending icmp echo replies.
     /// Returns dict of <session id> -> rtt
     fn recv(&mut self) -> PyResult<Option<HashMap<String, u64>>> {
-        let mut buf = [0u8; MAX_SIZE];
-        // cast to &mut [MaybeUninit<8>]
-        let r_buf = unsafe { &mut *(&mut buf as *mut [u8] as *mut [MaybeUninit<u8>]) };
         let mut r = HashMap::<String, u64>::new();
-        while let Ok((size, addr)) = self.io.recv_from(r_buf) {
+        while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
             // Drop too short packets
             if size < self.proto.ip_header_size + ICMP_SIZE {
                 continue;
             }
+            let buf =
+                unsafe { Self::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]) };
             // Parse packet
-            if let Ok(pkt) = IcmpPacket::try_from(&buf[self.proto.ip_header_size..size]) {
+            if let Ok(pkt) = IcmpPacket::try_from(buf) {
                 if pkt.is_match(self.proto.icmp_reply_type, self.signature) {
                     // Measure RTT
                     let ts = self.get_ts();
@@ -243,7 +245,7 @@ impl SocketWrapper {
         // We cannnot remove items while holding the iterator.
         // Remove them later in separate cycle.
         // To be replaced with `pop_first` after the `map_first_last`
-        // will be stabilized.
+        // feeature will be stabilized.
         for item in self.sessions.iter() {
             if !item.is_expired(ts) {
                 break;
@@ -334,5 +336,13 @@ impl SocketWrapper {
     #[cfg(not(target_os = "linux"))]
     fn disable_accelerated(&self) -> std::io::Result<()> {
         Ok(())
+    }
+    // Assume buffer initialized
+    // @todo: Replace with BufRead.filled()
+    // @todo: Replace when `maybe_uninit_slice` feature
+    // will be stabilized
+    const unsafe fn slice_assume_init_ref(slice: &[MaybeUninit<u8>]) -> &[u8] {
+        //MaybeUninit::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
+        &*(slice as *const [MaybeUninit<u8>] as *const [u8])
     }
 }

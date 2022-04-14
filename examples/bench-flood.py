@@ -24,4 +24,4 @@ async def main(address: str, size: int = 64, count: int = 4) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main(sys.argv[1], count=10_000))
+    asyncio.run(main(sys.argv[1], count=100_000))

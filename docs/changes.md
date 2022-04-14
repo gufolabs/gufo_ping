@@ -2,8 +2,10 @@
 
 ## Upcoming Release
 
-* Apply BPF filter to raw socket to reduce context switches (Linux)
-* examples/bench-flood.py script
+* Apply BPF filter to raw socket to reduce context switches (Linux).
+* examples/bench-flood.py script.
+* Switch to Rust 1.60.0.
+* Optimized buffer handling (~10% speedup).
 
 ## 0.1.0
 
