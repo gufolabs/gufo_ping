@@ -4,7 +4,7 @@ ENV \
     PATH=/usr/local/cargo/bin:$PATH\
     RUSTUP_HOME=/usr/local/rustup\
     CARGO_HOME=/usr/local/cargo\
-    RUST_VERSION=1.59.0\
+    RUST_VERSION=1.60.0\
     RUST_ARCH=x86_64-unknown-linux-gnu\
     RUSTUP_SHA=3dc5ef50861ee18657f9db2eeb7392f9c2a6c95c90ab41e45ab4ca71476b4338
 RUN \
@@ -14,9 +14,8 @@ RUN \
     ca-certificates\
     gcc\
     libc6-dev\
-    wget\
-    && wget https://static.rust-lang.org/rustup/archive/1.24.3/${RUST_ARCH}/rustup-init \
-    && (echo "${RUSTUP_SHA} *rustup-init" | sha256sum -c -)\
+    curl\
+    && curl -o rustup-init https://sh.rustup.rs \
     && chmod a+x rustup-init\
     && ./rustup-init -y --no-modify-path --profile minimal\
     --default-toolchain ${RUST_VERSION} --default-host ${RUST_ARCH}\
