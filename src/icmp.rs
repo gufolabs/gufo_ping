@@ -110,41 +110,6 @@ impl IcmpPacket {
     }
 }
 
-// Build IcmpPacket
-impl TryFrom<&IcmpPacket> for Vec<u8> {
-    type Error = &'static str;
-
-    fn try_from(pkt: &IcmpPacket) -> Result<Self, Self::Error> {
-        if pkt.size < 24 {
-            return Err("too short");
-        }
-        let mut buf = Vec::<u8>::with_capacity(pkt.size);
-        unsafe {
-            buf.set_len(pkt.size);
-        }
-        // Write type, fill code and checksum with 0
-        BigEndian::write_u32(&mut buf, (pkt.icmp_type as u32) << 24);
-        // Request id, 2 octets
-        BigEndian::write_u16(&mut buf[4..], pkt.request_id);
-        // Sequence, 2 octets
-        BigEndian::write_u16(&mut buf[6..], pkt.seq);
-        // Signature, 8 octets
-        BigEndian::write_u64(&mut buf[8..], pkt.signature);
-        // Timestamp, 8 octets
-        BigEndian::write_u64(&mut buf[16..], pkt.ts);
-        // Generate padding, Fill rest by "A"
-        if pkt.size > 24 {
-            buf[24..].fill(48u8);
-        }
-        // Calculate checksum
-        // RFC-1071
-        let cs = checksum(&buf);
-        buf[2] = cs[0];
-        buf[3] = cs[1];
-        Ok(buf)
-    }
-}
-
 // Parse IcmpPacket
 impl TryFrom<&[u8]> for IcmpPacket {
     type Error = &'static str;
@@ -207,9 +172,14 @@ mod tests {
     };
 
     #[test]
-    fn test_icmpv4_to_vec() {
-        let out = Vec::<u8>::try_from(&ICMPV4_REQ_PKT).unwrap();
-        assert_eq!(out, ICMPV4_REQ);
+    fn test_icmpv4_write() {
+        let mut buf: [MaybeUninit<u8>; 4096] = unsafe { MaybeUninit::uninit().assume_init() };
+        let n = ICMPV4_REQ_PKT.write(&mut buf);
+        let result = unsafe {
+            // slice_assume_init_ref
+            &*(&buf[..n] as *const [MaybeUninit<u8>] as *const [u8])
+        };
+        assert_eq!(result, ICMPV4_REQ);
     }
 
     #[test]

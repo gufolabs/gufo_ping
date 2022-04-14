@@ -20,7 +20,7 @@ on:
   release:
     types: ["published"]
 jobs:
-  lint:
+  py-lint:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repo
@@ -53,9 +53,38 @@ jobs:
       - name: Check Mypy
         run: mypy --strict src/
 
-  test:
+  rust-test:
     runs-on: ubuntu-20.04
-    needs: lint
+    steps:
+      - name: Setup Environment
+        run: |
+          echo "CARGO_HOME=${HOME}/.cargo" >> $GITHUB_ENV
+          echo "RUSTUP_HOME=${HOME}/.rustup" >> $GITHUB_ENV
+          echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        run: ./tools/build/setup-rust.sh
+
+      - name: Install Rust Components
+        run: |
+          rustup component add rustfmt
+          rustup component add clippy
+
+      - name: Check Rust Format
+        run: cargo fmt --check
+
+      - name: Run Rust Tests
+        run: cargo test
+
+      - name: Run Clippy Tests
+        run: cargo clippy
+
+  py-test:
+    runs-on: ubuntu-20.04
+    needs: [py-lint, rust-test]
     strategy:
       fail-fast: true
       matrix:
@@ -94,9 +123,6 @@ jobs:
 
       - name: Build Rust module
         run: python setup.py develop
-
-      - name: Run Rust Tests
-        run: cargo test
 
       # WARNING: Cannot open raw socket on GitHub runner,
       # so part of tests will be skipped.
