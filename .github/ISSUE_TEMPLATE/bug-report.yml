@@ -50,7 +50,7 @@ body:
   - type: textarea
     attributes:
       label: "Gufo Ping version information"
-      description: Attach your actual Gufo Ping version
+      description: Output from `import gufo.ping;print(gufo.ping.__version__)`
     validations:
       required: true
 

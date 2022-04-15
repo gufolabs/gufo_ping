@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.1
+
+* `__version__` attribute.
+
 ## 0.2.0
 
 * Apply BPF filter to raw socket to reduce context switches (Linux).
