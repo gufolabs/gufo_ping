@@ -12,5 +12,5 @@ Attributes:
 # Gufo Labs modules
 from .ping import Ping  # noqa
 
-__version__: str = "0.2.1"
+__version__: str = "0.2.2"
 __all__ = ["Ping", "__version__"]

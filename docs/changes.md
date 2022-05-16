@@ -1,5 +1,9 @@
 # Changes
 
+## 0.2.2
+
+* Rollback to `manylinux2014` for RHEL7 compatibility.
+
 ## 0.2.1
 
 * `__version__` attribute.
