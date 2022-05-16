@@ -12,6 +12,7 @@ on:
       - "tests/**"
       - "setup.cfg"
       - "setup.py"
+      - "pyproject.toml"
     branches:
       - master
   pull_request:
