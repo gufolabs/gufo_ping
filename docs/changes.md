@@ -3,6 +3,7 @@
 ## 0.2.2
 
 * Rollback to `manylinux2014` for RHEL7 compatibility.
+* PyO3 0.16.4
 
 ## 0.2.1
 
