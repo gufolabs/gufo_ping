@@ -117,9 +117,9 @@ class SocketProto(Protocol):
         Returns:
             * `None` - when no packets received.
             * Dict of `session id` -> `rtt`,
-              where `session id` is the string of
-              <address>-<request_id>-<seq>,
-              and `rtt` - is the measured round-trip-time in nanoseconds.
+                where `session id` is the string of
+                <address>-<request_id>-<seq>,
+                and `rtt` - is the measured round-trip-time in nanoseconds.
         """
         ...
 
@@ -130,7 +130,7 @@ class SocketProto(Protocol):
         Returns:
             * `None` - when no sessions expired.
             * List of expired sessionn ids, where each session id
-              has the format: <address>-<request_id>-<seq>
+                has the format: <address>-<request_id>-<seq>
         """
         ...
 
