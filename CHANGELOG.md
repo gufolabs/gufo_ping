@@ -11,6 +11,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Changed
 
 * Move CHANGELOG.md to the project root
+* Add CITATION.cff
 
 ### Infrastructure
 
