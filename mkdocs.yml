@@ -24,7 +24,7 @@ nav:
       - Code of Conduct: CODE_OF_CONDUCT.md
   - Supported Standards: standards.md
   - FAQ: faq.md
-  - Changes: CHANGELOG.md
+  - Changelog: CHANGELOG.md
   - License: license.md
   # Users
 theme:
