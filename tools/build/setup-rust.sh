@@ -8,7 +8,7 @@
 set -x
 set -e
 
-RUST_VERSION=1.60.0
+RUST_VERSION=1.65.0
 
 # @todo: Allow override
 export RUSTUP_HOME=${RUSTUP_HOME:-/usr/local/rustup}
