@@ -25,7 +25,7 @@
         "python.formatting.provider": "black",
         "python.pythonPath": "/usr/local/bin/python",
         "[rust]": {
-            "editor.defaultFormatter": "rust-lang.rust",
+            "editor.defaultFormatter": "rust-lang.rust-analyzer",
             "editor.formatOnSave": true,
         }
     },
@@ -36,6 +36,6 @@
         "ms-azuretools.vscode-docker",
         "be5invis.toml",
         "redhat.vscode-yaml",
-        "rust-lang.rust",
+        "rust-lang.rust-analyzer",
     ]
 }
