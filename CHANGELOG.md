@@ -8,6 +8,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### [Unreleased]
 
+### Added
+
+* Python 3.11 compatibility
+
 ### Changed
 
 * Move CHANGELOG.md to the project root
@@ -30,7 +34,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ## 0.2.1 - 2022-04-15
 
-### Changed
+### Added
 
 * `__version__` attribute.
 
