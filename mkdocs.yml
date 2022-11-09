@@ -31,6 +31,10 @@ theme:
   name: material
   logo: assets/logo.png
   favicon: assets/logo.png
+watch:
+  - docs/
+  - src/gufo/
+  - examples/
 plugins:
   - search
   - gen-files:
@@ -46,9 +50,6 @@ plugins:
           options:
             show_source: false
             show_submodules: false
-      watch:
-        - src/gufo/
-        - examples/
 markdown_extensions:
   - toc:
       permalink: True
