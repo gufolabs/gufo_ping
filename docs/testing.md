@@ -15,6 +15,14 @@ $ python -m build --sdist --wheel
 
 Compiled packages will be available in the `dist/` directory.
 
+## Rebuilding Rust Modules
+
+To rebuild Rust modules for debug and testing:
+
+```
+$ python setup.py build_rust
+```
+
 ## Running tests
 
 Rebuild rust modules, if changed:
