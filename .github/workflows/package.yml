@@ -51,9 +51,9 @@ jobs:
         uses: docker/setup-qemu-action@v1
 
       - name: Build Packages
-        uses: pypa/cibuildwheel@v2.5.0
+        uses: pypa/cibuildwheel@v2.11.2
         env:
-          CIBW_BUILD: cp{38,39,310}-${{matrix.platform}}_${{matrix.arch}}
+          CIBW_BUILD: cp{38,39,310,311}-${{matrix.platform}}_${{matrix.arch}}
           CIBW_ARCHS_LINUX: ${{matrix.arch}}
           CIBW_ENVIRONMENT: >-
             PATH=/usr/local/cargo/bin:$PATH
@@ -84,7 +84,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.4.0
         env:
           SETUP_RUST_PLATFORM: ${{matrix.platform}}-${{matrix.arch}}
-          CIBW_BUILD: cp{38,39,310}-${{matrix.platform}}_${{matrix.arch}}
+          CIBW_BUILD: cp{38,39,310,311}-${{matrix.platform}}_${{matrix.arch}}
           CIBW_ARCHS: ${{matrix.arch}}
           CIBW_ENVIRONMENT: >-
             PATH=$HOME/.cargo/bin:$PATH
