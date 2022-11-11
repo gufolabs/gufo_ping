@@ -55,12 +55,9 @@ curl -o rustup-init https://sh.rustup.rs
 # rustup-init tries to check /proc/self/exe
 # which is not accessible during Docker build
 # on aarch64
-grep /proc/self/exe rustup-init > /dev/null
-if [ $? -eq 0 -a ! -f /proc/self/exe ]; then
-    echo "Patching rustup"
-    sed -i.bak 's#/proc/self/exe#$SHELL#g'
-    rm rustup-init.bak
-fi
+echo "Patching rustup"
+sed -i.bak 's#/proc/self/exe#/bin/sh#g' rustup-init
+rm rustup-init.bak
 #
 chmod a+x rustup-init
 ./rustup-init -y --no-modify-path --profile minimal\
