@@ -6,11 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
-### 0.2.3 - 2022-11-11
+### [Unreleased]
 
 ### Added
 
 * Python 3.11 compatibility
+* `py.typed` file for PEP-561 compatibility
 
 ### Changed
 
