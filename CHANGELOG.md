@@ -23,6 +23,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * Rust 1.65.0
 * PyO3 0.17.3
+* setuptools-rust 1.5.2
 * mkdocs-material 0.8.5
 * Unify Rust setup for Dockerfile and GitHub CI
 * Use Python 3.11 in Devcontainer
