@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build-sdist
     strategy:
-      fail-fast: true
+      # fail-fast: true
       matrix:
         arch: [x86_64, aarch64]
         platform: [manylinux, musllinux]
