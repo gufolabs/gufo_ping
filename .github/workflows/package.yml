@@ -35,14 +35,24 @@ jobs:
         with:
           name: sdist
           path: dist/*.tar.gz
+
   build-wheel-linux:
     runs-on: ubuntu-20.04
     needs: build-sdist
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, aarch64]
-        platform: [manylinux, musllinux]
+        include:
+          # Linux, glibc
+          - platform: manylinux
+            arch: x86_64
+          - platform: manylinux
+            arch: aarch64
+          # Linux, musl
+          - platform: musllinux
+            arch: x86_64
+          - platform: musllinux
+            arch: aarch64
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -60,6 +70,8 @@ jobs:
             CARGO_HOME=/usr/local/cargo
             RUSTUP_HOME=/usr/local/rustup
             SETUP_RUST_PLATFORM=${{matrix.platform}}-${{matrix.arch}}
+          BUILD_RUSTC_FLAGS: --verbose
+          BUILD_CARGO_FLAGS: --verbose
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
@@ -73,15 +85,17 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # arch: [x86_64, arm64]
-        arch: [x86_64]
-        platform: [macosx]
+        include:
+          - arch: x86_64
+            platform: macosx
+          # - arch: arm64
+          #   platform: macosx
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
       - name: Build Packages
-        uses: pypa/cibuildwheel@v2.4.0
+        uses: pypa/cibuildwheel@v2.11.2
         env:
           SETUP_RUST_PLATFORM: ${{matrix.platform}}-${{matrix.arch}}
           CIBW_BUILD: cp{38,39,310,311}-${{matrix.platform}}_${{matrix.arch}}
