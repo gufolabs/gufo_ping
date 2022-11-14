@@ -67,5 +67,3 @@ rm rustup-init
 # Check
 cargo --version
 rustc --version
-#
-cargo clean
