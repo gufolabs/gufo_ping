@@ -56,6 +56,8 @@ jobs:
 
   rust-test:
     runs-on: ubuntu-20.04
+    env:
+      RUST_ARCH: x86_64-unknown-linux-gnu
     steps:
       - name: Setup Environment
         run: |
