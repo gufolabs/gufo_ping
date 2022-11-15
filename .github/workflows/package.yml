@@ -77,8 +77,10 @@ jobs:
         include:
           - arch: x86_64
             target: x86_64-unknown-linux-gnu
+            platform: linux/amd64
           - arch: aarch64
             target: aarch64-unknown-linux-gnu
+            platform: linux/arm64
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -97,6 +99,7 @@ jobs:
           -v $PWD:/workdir 
           -w /workdir 
           --user 0 
+          --platform ${{ matrix.platform }}
           quay.io/pypa/manylinux_2_24_${{ matrix.arch }}:latest
           ./tools/build/build-many.sh 3.8 3.9 3.10 3.11
 
@@ -114,9 +117,11 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
+            platform: linux/amd64
           - arch: aarch64
-            target: aarch64-unknown-linux-gnu
+            target: aarch64-unknown-linux-musl
+            platform: linux/arm64
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -138,6 +143,7 @@ jobs:
           -v $PWD:/workdir
           -w /workdir
           --user 0
+          --platform ${{ matrix.platform }}
           quay.io/pypa/musllinux_1_1_${{ matrix.arch }}:latest
           ./tools/build/build-many.sh 3.8 3.9 3.10
 
