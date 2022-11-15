@@ -95,7 +95,7 @@ jobs:
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
         with:
-          name: wheel_manylinux_2_24_${{ matrich.arch }}
+          name: wheel_manylinux_2_24_${{ matrix.arch }}
           path: wheelhouse/*.whl
 
   build-musllinux-1_1:
@@ -136,7 +136,7 @@ jobs:
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
         with:
-          name: wheel_musllinux_1_1_${{ matrich.arch }}
+          name: wheel_musllinux_1_1_${{ matrix.arch }}
           path: wheelhouse/*.whl
 
   build-wheel-macos:
