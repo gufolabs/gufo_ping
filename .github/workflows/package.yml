@@ -160,6 +160,7 @@ jobs:
             PATH=$HOME/.cargo/bin:$PATH
             CARGO_HOME=$HOME/.cargo
             RUSTUP_HOME=$HOME/.rustup
+            RUST_ARCH=x86_64-apple-darwin
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
