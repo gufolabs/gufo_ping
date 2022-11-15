@@ -83,12 +83,14 @@ jobs:
           platforms: all
 
       - name: Build wheels
-        run: ./tools/build/build-many.sh 3.8 3.9 3.10 3.11
-        env:
-          RUST_ARCH: ${{ matrix.target }}
-        with:
-          image: quay.io/pypa/manylinux_2_24_${{ matrix.arch }}:latest
-          options: -v ${{ github.workspace }}:/workdir -w /workdir --user 0
+        run: >
+          docker run --rm
+          -e RUST_ARCH=${{ matrix.target }}
+          -v $PWD:/workdir 
+          -w /workdir 
+          --user 0 
+          quay.io/pypa/manylinux_2_24_${{ matrix.arch }}:latest
+          ./tools/build/build-many.sh 3.8 3.9 3.10 3.11
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
@@ -122,12 +124,14 @@ jobs:
       # ValueError: Cannot repair wheel, because required library
       # "librt.so.1" could not be located
       - name: Build wheels
-        run: ./tools/build/build-many.sh 3.8 3.9 3.10
-        env:
-          RUST_ARCH: ${{ matrix.target }}
-        with:
-          image: quay.io/pypa/manylinux_2_24_${{ matrix.arch }}:latest
-          options: -v ${{ github.workspace }}:/workdir -w /workdir --user 0
+        run: >
+          docker run --rm
+          -e RUST_ARCH=${{ matrix.target }}
+          -v $PWD:/workdir
+          -w /workdir
+          --user 0
+          quay.io/pypa/musllinux_1_1_${{ matrix.arch }}:latest
+          ./tools/build/build-many.sh 3.8 3.9 3.10
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
