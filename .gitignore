@@ -12,6 +12,7 @@ syntax: glob
 /dist/
 /target/
 /build/
+/wheelhouse/
 *.egg-info/
 *.dist-info/
 __pycache__

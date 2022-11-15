@@ -8,7 +8,7 @@ on:
   workflow_dispatch: {}
 jobs:
   build-sdist:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -36,47 +36,103 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  build-wheel-linux:
-    runs-on: ubuntu-20.04
+  # glibc 2.17, x86_64 (RHEL7)
+  build-manylinux_2_17-x86_64:
+    runs-on: ubuntu-22.04
     needs: build-sdist
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Linux, glibc
-          - platform: manylinux
-            arch: x86_64
-          - platform: manylinux
-            arch: aarch64
-          # Linux, musl
-          - platform: musllinux
-            arch: x86_64
-          - platform: musllinux
-            arch: aarch64
+    env:
+      RUST_ARCH: x86_64-unknown-linux-gnu
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64:latest
+      options: --user 0
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-      - name: Set up QEMU for multi-arch build
-        uses: docker/setup-qemu-action@v1
-
-      - name: Build Packages
-        uses: pypa/cibuildwheel@v2.11.2
-        env:
-          CIBW_BUILD: cp{38,39,310,311}-${{matrix.platform}}_${{matrix.arch}}
-          CIBW_ARCHS_LINUX: ${{matrix.arch}}
-          CIBW_ENVIRONMENT: >-
-            PATH=/usr/local/cargo/bin:$PATH
-            CARGO_HOME=/usr/local/cargo
-            RUSTUP_HOME=/usr/local/rustup
-            SETUP_RUST_PLATFORM=${{matrix.platform}}-${{matrix.arch}}
-          BUILD_RUSTC_FLAGS: --verbose
-          BUILD_CARGO_FLAGS: --verbose
+      # Warning! No Python 3.11 in manylinux2014 image
+      - name: Build wheels
+        run: ./tools/build/build-many.sh 3.8 3.9 3.10
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
         with:
-          name: wheel_${{ matrix.platform }}_${{ matrix.arch }}
+          name: wheel_manylinux_2_17_x86_64
+          path: wheelhouse/*.whl
+
+  # glibc 2.24, x86_64/aarch64 (Debian 9)
+  build-manylinux_2_24:
+    runs-on: ubuntu-22.04
+    needs: build-sdist
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86_64-unknown-linux-gnu
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: matrix.arch != 'x86_64'
+        uses: docker/setup-qemu-action@v2
+        with:
+          image: tonistiigi/binfmt:qemu-v6.2.0
+          platforms: all
+
+      - name: Build wheels
+        run: ./tools/build/build-many.sh 3.8 3.9 3.10 3.11
+        env:
+          RUST_ARCH: ${{ matrix.target }}
+        with:
+          image: quay.io/pypa/manylinux_2_24_${{ matrix.arch }}:latest
+          options: -v ${{ github.workspace }}:/workdir -w /workdir --user 0
+
+      - name: Save Artefacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheel_manylinux_2_24_${{ matrich.arch }}
+          path: wheelhouse/*.whl
+
+  build-musllinux-1_1:
+    runs-on: ubuntu-22.04
+    needs: build-sdist
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86_64-unknown-linux-gnu
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: matrix.arch != 'x86_64'
+        uses: docker/setup-qemu-action@v2
+        with:
+          image: tonistiigi/binfmt:qemu-v6.2.0
+          platforms: all
+
+      # auditwheel crashes on 3.11
+      # ValueError: Cannot repair wheel, because required library
+      # "librt.so.1" could not be located
+      - name: Build wheels
+        run: ./tools/build/build-many.sh 3.8 3.9 3.10
+        env:
+          RUST_ARCH: ${{ matrix.target }}
+        with:
+          image: quay.io/pypa/manylinux_2_24_${{ matrix.arch }}:latest
+          options: -v ${{ github.workspace }}:/workdir -w /workdir --user 0
+
+      - name: Save Artefacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheel_musllinux_1_1_${{ matrich.arch }}
           path: wheelhouse/*.whl
 
   build-wheel-macos:
@@ -115,7 +171,8 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - build-sdist
-      - build-wheel-linux
+      - build-manylinux_2_17-x86_64
+      - build-manylinux_2_24
       - build-wheel-macos
     steps:
       - name: Download Artefacts
