@@ -6,18 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
-### [Unreleased]
+## 0.2.3 - 2022-11-17
 
 ### Added
 
 * Python 3.11 compatibility
 * `py.typed` file for PEP-561 compatibility
+* Add CITATION.cff
 
 ### Changed
 
 * Reworked wheels builder
 * Move CHANGELOG.md to the project root
-* Add CITATION.cff
 * Rename `_fast.py` to `_fast.pyi`
 
 ### Infrastructure
