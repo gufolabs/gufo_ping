@@ -33,7 +33,6 @@ The code base of the project has following structure:
 [GitHub Workflows]: https://docs.github.com/en/actions/using-workflows
 [Mkdocs]: https://www.mkdocs.org
 [Mkdocs Material]: https://squidfunk.github.io/mkdocs-material/
-[IPython]: https://ipython.readthedocs.io/en/stable/
 [Black]: https://black.readthedocs.io/en/stable
 [Flake8]: https://flake8.pycqa.org/en/latest/
 [Mypy]: https://mypy.readthedocs.io/en/stable/
