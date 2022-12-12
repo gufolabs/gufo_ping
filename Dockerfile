@@ -3,7 +3,8 @@ COPY .requirements tools/build/setup-rust.sh /tmp
 ENV \
     PATH=/usr/local/cargo/bin:$PATH\
     RUSTUP_HOME=/usr/local/rustup\
-    CARGO_HOME=/usr/local/cargo
+    CARGO_HOME=/usr/local/cargo\
+    RUST_ARCH=x86_64-unknown-linux-gnu
 RUN \
     apt-get update \
     && apt-get install -y --no-install-recommends\
