@@ -8,6 +8,9 @@ target-version = ['py39']
 [tool.coverage.run]
 omit = ["*tests*", "*examples*"]
 
+[tool.coverage.html]
+directory = "dist/coverage"
+
 [tool.cibuildwheel]
 before-test = "pip install -r {project}/.requirements/test.txt"
 test-command = "pytest -v {project}/tests"
