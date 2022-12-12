@@ -19,11 +19,11 @@ jobs:
     steps:
       # Checkout source code
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Cache dependencies
       - name: Cache Dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ./.pip
           key: ${{ runner.os }}-docs-${{ hashFiles('./.requirements/docs.txt') }}

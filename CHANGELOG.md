@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
+## [Unreleased]
+
+### Infrastructure
+
+* Use `actions/checkout@v3`
+* Use `actions/cache@v3`
+* Project structure tests
+* CI workflows tests
+
 ## 0.2.3 - 2022-11-17
 
 ### Added

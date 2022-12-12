@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set Up Python 3.10
         uses: actions/setup-python@v4
@@ -48,7 +48,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # Warning! No Python 3.11 in manylinux2014 image
       - name: Build wheels
@@ -83,7 +83,7 @@ jobs:
           #   platform: linux/arm64
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU
         if: matrix.arch != 'x86_64'
@@ -124,7 +124,7 @@ jobs:
           #   platform: linux/arm64
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU
         if: matrix.arch != 'x86_64'
@@ -166,7 +166,7 @@ jobs:
           #   platform: macosx
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build Packages
         uses: pypa/cibuildwheel@v2.11.2
