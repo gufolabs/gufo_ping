@@ -4,7 +4,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.202.3/containers/docker-existing-dockerfile
 // * For configuration guidelines see @todo
 {
-    "name": "Gufo Labs' Gufo Ping Development Container",
+    "name": "Gufo Ping Development Container",
     "runArgs": [
         "--init"
     ],
