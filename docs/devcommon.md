@@ -4,7 +4,7 @@
 
 * [ ] Change `__version__` in `src/gufo/ping/__init__.py`
 * [ ] Change `[package]/version` in `Cargo.toml`
-* [ ] Add section in `docs/changes.md`
+* [ ] Add section in `CHANGELOG.md`
 
 ## Bump Rust Version
 
