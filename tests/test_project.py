@@ -29,7 +29,6 @@ REQUIRED_FILES = [
     ".github/CODEOWNERS",
     ".github/ISSUE_TEMPLATE/bug-report.yml",
     ".github/ISSUE_TEMPLATE/feature-request.yml",
-    ".github/ISSUE_TEMPLATE/security-report.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".gitignore",
     ".requirements/docs.txt",
