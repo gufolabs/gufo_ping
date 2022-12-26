@@ -8,6 +8,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ## [Unreleased]
 
+### Fixed
+
+* Handle "No route to network/host" situation correctly
+
 ### Infrastructure
 
 * Use `actions/checkout@v3`

@@ -138,7 +138,13 @@ class PingSocket(object):
         sid = f"{addr}-{request_id}-{seq}"
         fut: Future[Optional[float]] = get_running_loop().create_future()
         # Build and send the packet
-        self.__sock.send(addr, request_id, seq, size or self.__size)
+        try:
+            self.__sock.send(addr, request_id, seq, size or self.__size)
+        except OSError:
+            # Some kernels raise OSError (Network Unreachable)
+            # when cannot find the route. Treat them as losses.
+            fut.set_result(None)
+            return await fut
         # Install future in the sessions
         self.__sessions[sid] = fut
         # Await response or timeout
