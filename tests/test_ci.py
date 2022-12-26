@@ -16,6 +16,7 @@ VERSIONS = [
     "actions/cache@v3",
     "actions/checkout@v3",
     "actions/setup-python@v4",
+    "pypa/gh-action-pypi-publish@release/v1",
 ]
 
 
