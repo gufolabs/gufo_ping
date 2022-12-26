@@ -14,6 +14,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 * Use `actions/cache@v3`
 * Project structure tests
 * CI workflows tests
+* Use Rust 1.66.0
 
 ## 0.2.3 - 2022-11-17
 
