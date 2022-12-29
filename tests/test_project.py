@@ -7,21 +7,30 @@
 
 # Python modules
 import os
+import sys
+import inspect
 
 # Third-party modules
 import pytest
 
 
+def _get_root():
+    mod_path = inspect.getfile(sys.modules[__name__])
+    rel_root = os.path.dirname(mod_path)
+    return os.path.abspath(os.path.join(rel_root, ".."))
+
+
 def _get_project():
     d = [
         f
-        for f in os.listdir(os.path.join("src", "gufo"))
+        for f in os.listdir(os.path.join(ROOT, "src", "gufo"))
         if not f.startswith(".") and not f.startswith("_")
     ]
     assert len(d) == 1
     return d[0]
 
 
+ROOT = _get_root()
 PROJECT = _get_project()
 
 REQUIRED_FILES = [
@@ -70,7 +79,8 @@ def test_required_is_sorted():
 
 @pytest.mark.parametrize("name", REQUIRED_FILES)
 def test_required_files(name: str):
-    assert os.path.exists(name), f"File {name} is missed"
+    full_path = os.path.join(ROOT, name)
+    assert os.path.exists(full_path), f"File {name} is missed"
 
 
 def test_version():

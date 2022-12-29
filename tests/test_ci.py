@@ -11,6 +11,15 @@ import os
 # Third-party modules
 import yaml
 import pytest
+import sys
+import inspect
+
+
+def _get_root():
+    mod_path = inspect.getfile(sys.modules[__name__])
+    rel_root = os.path.dirname(mod_path)
+    return os.path.abspath(os.path.join(rel_root, ".."))
+
 
 VERSIONS = [
     "actions/cache@v3",
@@ -22,7 +31,7 @@ VERSIONS = [
 
 def _iter_actions():
     versions = {a.split("@")[0]: a.split("@")[1] for a in VERSIONS}
-    root = os.path.join(".github", "workflows")
+    root = os.path.join(_get_root(), ".github", "workflows")
     for f in os.listdir(root):
         if f.startswith(".") or not f.endswith(".yml"):
             continue
