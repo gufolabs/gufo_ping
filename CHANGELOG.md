@@ -11,6 +11,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Changed
 
 * docs: license.md renamed to LICENSE.md
+* Use PyO3 0.18
 
 ## 0.2.4 - 2022-12-27
 
