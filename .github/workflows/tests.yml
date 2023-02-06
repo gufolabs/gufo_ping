@@ -49,7 +49,7 @@ jobs:
         run: black --check examples/ src/ tests/
 
       - name: Check Flake8
-        run: flake8 examples/ src/ tests/
+        run: ruff -q examples/ src/ tests/
 
       - name: Check Mypy
         run: mypy --strict src/

@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: PingSocket test
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules
@@ -12,29 +12,30 @@ import pytest
 
 # Gufo Labs modules
 from gufo.ping.socket import PingSocket
+
 from .util import is_denied
 
 
 @pytest.mark.skipif(is_denied(), reason="Permission denied")
 @pytest.mark.parametrize(
-    ["afi", "expected"], [(1, False), (4, True), (6, True)]
+    ("afi", "expected"), [(1, False), (4, True), (6, True)]
 )
-def test_afi(afi, expected):
-    async def inner_fail():
+def test_afi(afi: int, expected: bool) -> None:
+    async def inner_fail() -> None:
         with pytest.raises(ValueError):
             PingSocket(afi=afi)
 
-    async def inner_ok():
+    async def inner_ok() -> None:
         PingSocket(afi=afi)
 
     asyncio.run(inner_ok() if expected else inner_fail())
 
 
 @pytest.mark.skipif(is_denied(), reason="Permission denied")
-def test_empty_read():
-    async def inner():
+def test_empty_read() -> None:
+    async def inner() -> None:
         s = PingSocket(afi=4)
-        r = s._PingSocket__on_read()
+        r = s._on_read()
         assert r is None
 
     asyncio.run(inner())
@@ -42,7 +43,7 @@ def test_empty_read():
 
 @pytest.mark.skipif(is_denied(), reason="Permission denied")
 @pytest.mark.parametrize(
-    ["afi", "addr", "expected"],
+    ("afi", "addr", "expected"),
     [
         #  IPv4
         (4, "127.0.0.1", "127.0.0.1"),
@@ -53,12 +54,12 @@ def test_empty_read():
         (6, "0::1", "::1"),
     ],
 )
-def test_clean_ip(afi, addr, expected):
-    async def inner_ok():
+def test_clean_ip(afi: int, addr: str, expected: str) -> None:
+    async def inner_ok() -> None:
         s = PingSocket(afi=afi)
         assert s.clean_ip(addr) == expected
 
-    async def inner_fail():
+    async def inner_fail() -> None:
         s = PingSocket(afi=afi)
         with pytest.raises(ValueError):
             s.clean_ip(addr)

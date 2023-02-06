@@ -1,12 +1,12 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Test Utilities
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules
-from typing import Optional
 import socket
+from typing import Optional
 
 
 def is_denied() -> bool:

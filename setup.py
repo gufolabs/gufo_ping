@@ -2,7 +2,7 @@
 # Gufo Ping: ICMPv4/ICMPv6 ping implementation
 # Python build
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules

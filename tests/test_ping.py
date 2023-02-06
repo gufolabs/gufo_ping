@@ -1,38 +1,40 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Test Ping
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules
 import asyncio
+from typing import Any, Dict
 
 # Third-party modules
 import pytest
 
 # Gufo Labs modules
 from gufo.ping import Ping
+
 from .util import is_denied
 
 
 @pytest.mark.parametrize(
-    ["address", "expected"], [("127.0.0.1", 4), ("::1", 6)]
+    ("address", "expected"), [("127.0.0.1", 4), ("::1", 6)]
 )
-def test_get_afi(address, expected):
-    afi = Ping._Ping__get_afi(address)
+def test_get_afi(address: str, expected: int) -> None:
+    afi = Ping._get_afi(address)
     assert afi == expected
 
 
 @pytest.mark.skipif(is_denied(), reason="Permission denied")
 @pytest.mark.parametrize(
-    ["address", "expected"],
+    ("address", "expected"),
     [
         # IPv4
         ("127.0.0.1", True),  # Loopback, always available
         ("192.0.2.1", False),  # RFC-5737 test range, should fail
     ],
 )
-def test_ping(address: str, expected: bool):
+def test_ping(address: str, expected: bool) -> None:
     ping = Ping()
     rtt = asyncio.run(ping.ping(address))
     if expected:
@@ -44,15 +46,15 @@ def test_ping(address: str, expected: bool):
 
 @pytest.mark.skipif(is_denied(), reason="Permission denied")
 @pytest.mark.parametrize(
-    ["address", "expected"],
+    ("address", "expected"),
     [
         # IPv4
         ("127.0.0.1", True),  # Loopback, always available
         ("192.0.2.1", False),  # RFC-5737 test range, should fail
     ],
 )
-def test_iter_rtt(address: str, expected: bool):
-    async def inner():
+def test_iter_rtt(address: str, expected: bool) -> None:
+    async def inner() -> None:
         r = []
         async for rtt in ping.iter_rtt(address, count=N_PROBES):
             r.append(rtt)
@@ -73,7 +75,7 @@ def test_iter_rtt(address: str, expected: bool):
 
 @pytest.mark.skipif(is_denied(), reason="Permission denied")
 @pytest.mark.parametrize(
-    ["cfg", "expected"],
+    ("cfg", "expected"),
     [
         # ttl
         ({"ttl": -1}, False),
@@ -98,7 +100,7 @@ def test_iter_rtt(address: str, expected: bool):
         ({"coarse": False}, True),
     ],
 )
-def test_valid_ping_settings(cfg, expected):
+def test_valid_ping_settings(cfg: Dict[str, Any], expected: bool) -> None:
     if expected:
         asyncio.run(Ping(**cfg).ping("127.0.0.1"))
     else:

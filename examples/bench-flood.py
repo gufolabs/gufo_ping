@@ -1,6 +1,7 @@
+import asyncio
 import sys
 import time
-import asyncio
+
 from gufo.ping import Ping
 
 

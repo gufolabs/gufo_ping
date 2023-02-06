@@ -1,16 +1,17 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Fast parallel ping example
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
-import sys
 import asyncio
+import sys
 import time
 from multiprocessing import cpu_count
-from threading import Thread
 from queue import Queue
+from threading import Thread
 from typing import List
+
 from gufo.ping import Ping
 
 # Maximal amounts of CPU used
@@ -21,7 +22,7 @@ N_TASKS = 50
 
 def main(path: str) -> None:
     """
-    Main pinger function.
+    Ping list of addresses.
 
     Args:
         path: Path to the list of IP addresses,
@@ -79,7 +80,7 @@ def worker(data: List[str], result_queue: Queue) -> None:
 
     Args:
         data: List of IP addresses to ping.
-        resut_queue: Queue to push results back.
+        result_queue: Queue to push results back.
     """
     # Create separate event loop per each thread
     loop = asyncio.new_event_loop()
@@ -97,10 +98,10 @@ async def async_worker(data: List[str], result_queue: Queue) -> None:
 
     Args:
         data: List of IP addresses to ping.
-        resut_queue: Queue to push results back.
+        result_queue: Queue to push results back.
     """
 
-    async def task(addr_queue: asyncio.Queue, done: asyncio.Event):
+    async def task(addr_queue: asyncio.Queue, done: asyncio.Event) -> None:
         """
         Worker task. Up to N_TASKS spawn per thread.
 

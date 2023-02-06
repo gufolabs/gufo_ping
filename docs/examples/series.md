@@ -1,4 +1,4 @@
-# Gufo Err Example: Series of Requests
+# Gufo Ping Example: Series of Requests
 
 Lets send the sequence of the ICMP echo requests and get the
 replies.
@@ -13,6 +13,12 @@ The code is straightforward:
 --8<-- "examples/series.py"
 ```
 
+We need `asyncio.run()` to run asynchronous code, so lets import the `asyncio`.
+
+```  py title="series.py" linenums="1" hl_lines="2"
+--8<-- "examples/series.py"
+```
+
 Import `sys` module to parse the CLI argument.
 
 !!! warning
@@ -20,19 +26,13 @@ Import `sys` module to parse the CLI argument.
     We use `sys.argv` only for demonstration purposes. Use `argsparse` or alternatives
     in real-world applications.
 
-```  py title="series.py" linenums="1" hl_lines="2"
---8<-- "examples/series.py"
-```
-
-We need `asyncio.run()` to run asynchronous code, so lets import the `asyncio`.
-
-```  py title="series.py" linenums="1" hl_lines="3"
+```  py title="series.py" linenums="1" hl_lines="4"
 --8<-- "examples/series.py"
 ```
 
 `Ping` object holds all necessary API, so import it from `gufo.ping`.
 
-```  py title="series.py" linenums="1" hl_lines="6"
+```  py title="series.py" linenums="1" hl_lines="7"
 --8<-- "examples/series.py"
 ```
 
@@ -40,7 +40,7 @@ Asynchronous code must be executed in the asynchronous functions, or coroutines.
 So we define our function as `async`. We expect an address to ping as the
 `addr` argument.
 
-```  py title="series.py" linenums="1" hl_lines="7"
+```  py title="series.py" linenums="1" hl_lines="8"
 --8<-- "examples/series.py"
 ```
 
@@ -50,7 +50,7 @@ of configuration variables for fine-tuning. Refer to the
 for further details. Defaults are good enough for our tutorial, so
 we ommited them.
 
-```  py title="series.py" linenums="1" hl_lines="8"
+```  py title="series.py" linenums="1" hl_lines="9"
 --8<-- "examples/series.py"
 ```
 
@@ -71,20 +71,20 @@ for details.
     Ping.iter_rtt() is the *asynchronous* iterator and should be
     used along with `async for` construction.
 
-```  py title="series.py" linenums="1" hl_lines="9"
+```  py title="series.py" linenums="1" hl_lines="10"
 --8<-- "examples/series.py"
 ```
 
 Lets print the result of each iteration.
 
-```  py title="series.py" linenums="1" hl_lines="12"
+```  py title="series.py" linenums="1" hl_lines="13"
 --8<-- "examples/series.py"
 ```
 
 To run our example from command line we need to check
 we're in `__main__` module.
 
-```  py title="series.py" linenums="1" hl_lines="13"
+```  py title="series.py" linenums="1" hl_lines="14"
 --8<-- "examples/series.py"
 ```
 

@@ -1,22 +1,36 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: PingSocket implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
+"""
+PingSocket implementation.
+
+Attributes:
+    IPv4: IPv4 address family.
+    IPv6: IPv6 address family.
+"""
+
 # Python modules
-from typing import Optional, Dict, cast
 from asyncio import Future, get_running_loop, sleep
+from typing import Dict, Optional, cast
 
 # Gufo Labs modules
-from .proto import SocketProto
 from ._fast import SocketWrapper
+from .proto import SocketProto
 
 NS = 1_000_000_000.0
+IPv4 = 4
+IPv6 = 6
+MAX_TTL = 255
+MAX_TOS = 255
 
 
 class PingSocket(object):
     """
+    Python API to Gufo Ping internals.
+
     Python-side ICMP requests/reply dispatcher for the given address family.
     Wraps Rust socket implementation.
 
@@ -39,8 +53,8 @@ class PingSocket(object):
     """
 
     def __init__(
-        self,
-        afi: int = 4,
+        self: "PingSocket",
+        afi: int = IPv4,
         size: int = 64,
         ttl: Optional[int] = None,
         tos: Optional[int] = None,
@@ -49,15 +63,18 @@ class PingSocket(object):
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
         accelerated: bool = True,
-    ):
+    ) -> None:
         self.__force_del = False
-        if afi != 4 and afi != 6:
-            raise ValueError("afi must be 4 or 6")
+        if afi != IPv4 and afi != IPv6:
+            msg = f"afi must be {IPv4} or {IPv6}"
+            raise ValueError(msg)
         # Check settings
-        if ttl is not None and (ttl < 1 or ttl > 255):
-            raise ValueError("ttl must be in 0..255 range")
-        if tos is not None and (tos < 0 or tos > 255):
-            raise ValueError("tos must be in 0..255 range")
+        if ttl is not None and (ttl < 1 or ttl > MAX_TTL):
+            msg = f"ttl must be in 0..{MAX_TTL} range"
+            raise ValueError(msg)
+        if tos is not None and (tos < 0 or tos > MAX_TOS):
+            msg = f"tos must be in 0..{MAX_TOS} range"
+            raise ValueError(msg)
         #
         self.__size = size
         # Create and initialize wrapped socket
@@ -81,13 +98,13 @@ class PingSocket(object):
         self.__sessions: Dict[str, Future[Optional[float]]] = {}
         # Install response reader
         self.__force_del = True
-        get_running_loop().add_reader(self.__sock_fd, self.__on_read)
+        get_running_loop().add_reader(self.__sock_fd, self._on_read)
         # Install deadline cleaner
-        self.__cleanup_task = get_running_loop().create_task(self.__cleanup())
+        self.__cleanup_task = get_running_loop().create_task(self._cleanup())
 
-    def __del__(self) -> None:
+    def __del__(self: "PingSocket") -> None:
         """
-        Perform cleanup on delete:
+        Perform cleanup on delete.
 
         * Cancel expiration task.
         * Remove socket reader.
@@ -104,7 +121,7 @@ class PingSocket(object):
         except RuntimeError:  # pragma: no cover
             pass  # Loop is already closed
 
-    def clean_ip(self, addr: str) -> str:
+    def clean_ip(self: "PingSocket", addr: str) -> str:
         """
         Normalize IP address to a stable form.
 
@@ -117,7 +134,7 @@ class PingSocket(object):
         return self.__sock.clean_ip(addr)
 
     async def ping(
-        self,
+        self: "PingSocket",
         addr: str,
         size: Optional[int] = None,
         request_id: int = 0,
@@ -150,10 +167,8 @@ class PingSocket(object):
         # Await response or timeout
         return await fut
 
-    def __on_read(self) -> None:
-        """
-        Handle socket read event.
-        """
+    def _on_read(self: "PingSocket") -> None:
+        """Handle socket read event."""
         # Get bulk read info from Rust side
         seen = self.__sock.recv()
         if seen is None:
@@ -166,10 +181,8 @@ class PingSocket(object):
                 # Pass rtt to the future, unblock await in `ping`
                 fut.set_result(float(rtt) / NS)
 
-    async def __cleanup(self) -> None:
-        """
-        Check for expired sessions and close them.
-        """
+    async def _cleanup(self: "PingSocket") -> None:
+        """Check for expired sessions and close them."""
         while True:
             # Wait for next cycle
             await sleep(self.__timeout)

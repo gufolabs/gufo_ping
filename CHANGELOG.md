@@ -15,6 +15,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Infrastructure
 
+* Adopt ruff
 * Build Python 3.11 wheels for manylinux2014
 
 ## 0.2.4 - 2022-12-27

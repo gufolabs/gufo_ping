@@ -1,18 +1,20 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Ping implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
+"""Ping client implementation."""
+
 # Python modules
-from typing import Optional, Dict, Tuple, AsyncIterable
 import asyncio
 import itertools
 import random
 from time import perf_counter
+from typing import AsyncIterable, Dict, Optional, Tuple
 
 # Gufo Labs modules
-from .socket import PingSocket
+from .socket import IPv4, IPv6, PingSocket
 
 
 class Ping(object):
@@ -67,7 +69,7 @@ class Ping(object):
     request_id = itertools.count(random.randint(0, 0xFFFF))
 
     def __init__(
-        self,
+        self: "Ping",
         size: int = 64,
         ttl: Optional[int] = None,
         tos: Optional[int] = None,
@@ -88,7 +90,7 @@ class Ping(object):
         self.__sockets: Dict[int, PingSocket] = {}
 
     @staticmethod
-    def __get_afi(address: str) -> int:
+    def _get_afi(address: str) -> int:
         """
         Get address family (AFI) for a given address.
 
@@ -100,11 +102,13 @@ class Ping(object):
             * `6` for IPv6
         """
         if ":" in address:
-            return 6
-        return 4
+            return IPv6
+        return IPv4
 
-    def __get_socket(self, address: str) -> PingSocket:
+    def __get_socket(self: "Ping", address: str) -> PingSocket:
         """
+        Get PingSocket instace.
+
         Get ping socket instance for specified address.
         Initialize when necessary.
 
@@ -114,7 +118,7 @@ class Ping(object):
         Returns:
             Initialized socket instance
         """
-        afi = self.__get_afi(address)
+        afi = self._get_afi(address)
         sock = self.__sockets.get(afi)
         if not sock:
             sock = PingSocket(
@@ -131,8 +135,10 @@ class Ping(object):
             self.__sockets[afi] = sock
         return sock
 
-    def __get_request_id(self) -> Tuple[int, int]:
+    def __get_request_id(self: "Ping") -> Tuple[int, int]:
         """
+        Get request id.
+
         Generate ICMP request id and starting
         sequence number.
 
@@ -144,11 +150,13 @@ class Ping(object):
         return request_id, seq
 
     async def ping(
-        self,
+        self: "Ping",
         addr: str,
         size: Optional[int] = None,
     ) -> Optional[float]:
         """
+        Do ping probe.
+
         Send ICMP echo request to the given address and await
         for response or timeout.
 
@@ -166,7 +174,7 @@ class Ping(object):
         return await sock.ping(addr, size=size, request_id=request_id, seq=seq)
 
     async def iter_rtt(
-        self,
+        self: "Ping",
         addr: str,
         *,
         size: Optional[int] = None,
@@ -174,6 +182,8 @@ class Ping(object):
         count: Optional[int] = None,
     ) -> AsyncIterable[Optional[float]]:
         """
+        Do the serie of ping probes.
+
         Send echo request every `interval` seconds,
         await and yield the result.
 

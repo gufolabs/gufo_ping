@@ -24,6 +24,11 @@
         "python.formatting.blackPath": "/usr/local/bin/black",
         "python.formatting.provider": "black",
         "python.pythonPath": "/usr/local/bin/python",
+        "[python]": {
+            "editor.codeActionsOnSave": {
+                "source.fixAll": true,
+            }
+        },
         "[rust]": {
             "editor.defaultFormatter": "rust-lang.rust-analyzer",
             "editor.formatOnSave": true,
@@ -32,10 +37,12 @@
     // Add the IDs of extensions you want installed when the container is created.
     "extensions": [
         "ms-python.python",
+        "ms-vscode.cpptools",
         "yzhang.markdown-all-in-one",
         "ms-azuretools.vscode-docker",
         "be5invis.toml",
         "redhat.vscode-yaml",
         "rust-lang.rust-analyzer",
+        "charliermarsh.ruff",
     ]
 }

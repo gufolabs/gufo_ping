@@ -1,12 +1,13 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: SocketProto
 # ---------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ---------------------------------------------------------------------
 
+"""SocketWrapper protocol definition."""
 
 # Python modules
-from typing import Optional, List, Dict, Protocol
+from typing import Dict, List, Optional, Protocol
 
 
 class SocketProto(Protocol):
@@ -17,10 +18,10 @@ class SocketProto(Protocol):
     implementing low-level details of the PingSocket.
     """
 
-    def __init__(self, afi: int) -> None:
+    def __init__(self: "SocketProto", afi: int) -> None:
         ...
 
-    def set_timeout(self, timeout: int) -> None:
+    def set_timeout(self: "SocketProto", timeout: int) -> None:
         """
         Set default ping timeout.
 
@@ -29,7 +30,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def set_ttl(self, ttl: int) -> None:
+    def set_ttl(self: "SocketProto", ttl: int) -> None:
         """
         Change outgoing packets' time-to-live field.
 
@@ -38,7 +39,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def set_tos(self, tos: int) -> None:
+    def set_tos(self: "SocketProto", tos: int) -> None:
         """
         Change outgoing packets' ToS/DSCP field.
 
@@ -47,7 +48,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def set_coarse(self, ct: bool) -> None:
+    def set_coarse(self: "SocketProto", ct: bool) -> None:
         """
         Switch between the internal timer implemenetation.
 
@@ -59,9 +60,11 @@ class SocketProto(Protocol):
         """
         ...
 
-    def set_send_buffer_size(self, size: int) -> None:
+    def set_send_buffer_size(self: "SocketProto", size: int) -> None:
         """
-        Set outgoing socket's buffer size. If the requested
+        Set outgoing socket's buffer size.
+
+        If the requested
         size is too big, adjust to proper size.
 
         Args:
@@ -69,9 +72,11 @@ class SocketProto(Protocol):
         """
         ...
 
-    def set_recv_buffer_size(self, size: int) -> None:
+    def set_recv_buffer_size(self: "SocketProto", size: int) -> None:
         """
-        Set incoming socket's buffer size. If the requested
+        Set incoming socket's buffer size.
+
+        If the requested
         size is too big, adjust to proper size.
 
         Args:
@@ -79,7 +84,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def set_accelerated(self, a: bool) -> None:
+    def set_accelerated(self: "SocketProto", a: bool) -> None:
         """
         Enable platform-dependend raw socket processing.
 
@@ -89,7 +94,9 @@ class SocketProto(Protocol):
                 * False - disable the acceleration.
         """
 
-    def get_fd(self) -> int:  # @todo: Shold be FileDescriptorLike
+    def get_fd(
+        self: "SocketProto",
+    ) -> int:  # @todo: Shold be FileDescriptorLike
         """
         Get socket's file descriptor.
 
@@ -98,7 +105,9 @@ class SocketProto(Protocol):
         """
         ...
 
-    def send(self, addr: str, request_id: int, seq: int, size: int) -> None:
+    def send(
+        self: "SocketProto", addr: str, request_id: int, seq: int, size: int
+    ) -> None:
         """
         Generate and send icmp request packet.
 
@@ -110,7 +119,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def recv(self) -> Optional[Dict[str, float]]:
+    def recv(self: "SocketProto") -> Optional[Dict[str, float]]:
         """
         Receive all awaiting packets.
 
@@ -123,7 +132,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def get_expired(self) -> Optional[List[str]]:
+    def get_expired(self: "SocketProto") -> Optional[List[str]]:
         """
         Get list of sessions with expired timeouts.
 
@@ -134,7 +143,7 @@ class SocketProto(Protocol):
         """
         ...
 
-    def clean_ip(self, addr: str) -> str:
+    def clean_ip(self: "SocketProto", addr: str) -> str:
         """
         Normalize IP address to a stable form.
 
