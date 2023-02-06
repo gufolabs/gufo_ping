@@ -1,6 +1,6 @@
-# Gufo Labs Ping Documentation
+# Gufo Ping Documentation
 
-*Gufo Labs Ping* is the accelerated Python asyncio IPv4/IPv6 ping implementation.
+*Gufo Ping* is the accelerated Python asyncio IPv4/IPv6 ping implementation.
 
 ## The Ping Problem
 
