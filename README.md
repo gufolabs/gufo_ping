@@ -5,7 +5,7 @@
 [![PyPi version](https://img.shields.io/pypi/v/gufo_ping.svg)](https://pypi.python.org/pypi/gufo_ping/)
 ![Python Versions](https://img.shields.io/pypi/pyversions/gufo_ping)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-![Build](https://img.shields.io/github/workflow/status/gufolabs/gufo_ping/Run%20Tests/master)
+![Build](https://img.shields.io/github/actions/workflow/status/gufolabs/gufo_ping/tests.yml?branch=master)
 ![Sponsors](https://img.shields.io/github/sponsors/gufolabs)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)
 
