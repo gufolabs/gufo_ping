@@ -19,6 +19,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 * Rust 1.68.0
 * PyO3 0.18
 * socket2 0.5
+* devcontainer: Move `settings` to `customizations.vscode.settings`
 
 ## 0.2.4 - 2022-12-27
 

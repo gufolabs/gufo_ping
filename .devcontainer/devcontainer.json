@@ -1,10 +1,7 @@
-// VScode development container settings:
-// * For format details, see https://aka.ms/devcontainer.json.
-// * For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.202.3/containers/docker-existing-dockerfile
-// * For configuration guidelines see @todo
+// Develompment containner settings.
+// For format details, see https://aka.ms/devcontainer.json.
 {
-    "name": "Gufo Ping Development Container",
+    "name": "Gufo Ping",
     "runArgs": [
         "--init"
     ],
@@ -17,32 +14,39 @@
         "target": "dev"
     },
     "containerEnv": {
-        "PYTHONPATH": "src"
+        "PYTHONPATH": "src",
+        "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse",
     },
-    // Set *default* container specific settings.json values on container create.
-    "settings": {
-        "python.formatting.blackPath": "/usr/local/bin/black",
-        "python.formatting.provider": "black",
-        "python.pythonPath": "/usr/local/bin/python",
-        "[python]": {
-            "editor.codeActionsOnSave": {
-                "source.fixAll": true,
-            }
-        },
-        "[rust]": {
-            "editor.defaultFormatter": "rust-lang.rust-analyzer",
-            "editor.formatOnSave": true,
+    // VSCode settings
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.formatting.blackPath": "/usr/local/bin/black",
+                "python.formatting.provider": "black",
+                "python.pythonPath": "/usr/local/bin/python",
+                "[python]": {
+                    "editor.codeActionsOnSave": {
+                        "source.fixAll": true,
+                    }
+                },
+                "[rust]": {
+                    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+                    "editor.formatOnSave": true,
+                }
+            },
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "ms-python.python",
+                "ms-vscode.cpptools",
+                "yzhang.markdown-all-in-one",
+                "ms-azuretools.vscode-docker",
+                "be5invis.toml",
+                "redhat.vscode-yaml",
+                "rust-lang.rust-analyzer",
+                "charliermarsh.ruff",
+            ]
         }
     },
-    // Add the IDs of extensions you want installed when the container is created.
-    "extensions": [
-        "ms-python.python",
-        "ms-vscode.cpptools",
-        "yzhang.markdown-all-in-one",
-        "ms-azuretools.vscode-docker",
-        "be5invis.toml",
-        "redhat.vscode-yaml",
-        "rust-lang.rust-analyzer",
-        "charliermarsh.ruff",
-    ]
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/gufo_ping,type=bind",
+    "workspaceFolder": "/workspaces/gufo_ping"
 }
