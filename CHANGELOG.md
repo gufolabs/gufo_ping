@@ -11,12 +11,14 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Changed
 
 * docs: license.md renamed to LICENSE.md
-* Use PyO3 0.18
 
 ### Infrastructure
 
 * Adopt ruff
 * Build Python 3.11 wheels for manylinux2014
+* Rust 1.68.0
+* PyO3 0.18
+* socket2 0.5
 
 ## 0.2.4 - 2022-12-27
 
@@ -30,7 +32,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 * Use `actions/cache@v3`
 * Project structure tests
 * CI workflows tests
-* Use Rust 1.66.0
+* Rust 1.66.0
 
 ## 0.2.3 - 2022-11-17
 
