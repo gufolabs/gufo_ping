@@ -67,7 +67,7 @@ select = [
 ]
 # Always autofix, but never try to fix `F401` (unused imports).
 fix = true
-ignore = ["D203", "D212", "D107", "PLR0913"]
+ignore = ["D203", "D212", "D107", "PLR0913", "S311"]
 unfixable = ["F401"]
 
 [tool.ruff.flake8-quotes]
@@ -96,4 +96,5 @@ max-complexity = 10
   "S101", # Use of assert detected
   "PT011", # {exc} is too broad, set the `match` parameter or use a more specific exception
   "PLR2004", # Magic value used in comparison, consider replacing {value} with a constant variable
+  "PLW0603", # Using the global statement to update `{var}` is discouraged
 ]
