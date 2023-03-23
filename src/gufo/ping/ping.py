@@ -11,7 +11,7 @@ import asyncio
 import itertools
 import random
 from time import perf_counter
-from typing import AsyncIterable, Dict, Optional, Tuple
+from typing import AsyncIterable, Dict, Iterable, Optional, Tuple, Union
 
 # Gufo Labs modules
 from .socket import IPv4, IPv6, PingSocket
@@ -23,6 +23,13 @@ class Ping(object):
 
     Args:
         size: Set outgoing packet's size, including IP header.
+        src_addr: Set source address for outgoing packets.
+            Depends upon address family. May be one of:
+            * None - detect source address automatically.
+            * str - containing source address for one address family.
+            * Iterable of strings, containing multiple addresses
+                which to be distributed among the address families.
+                First address for given address family will be used.
         ttl: Set outgoing packet's TTL.
             Use OS defaults when empty.
         tos: Set DSCP/TOS field to outgoing packets.
@@ -71,6 +78,7 @@ class Ping(object):
     def __init__(
         self: "Ping",
         size: int = 64,
+        src_addr: Union[None, str, Iterable[str]] = None,
         ttl: Optional[int] = None,
         tos: Optional[int] = None,
         timeout: float = 1.0,
@@ -80,6 +88,7 @@ class Ping(object):
         accelerated: bool = True,
     ) -> None:
         self.__size = size
+        self.__src_addr = self._get_src_addr(src_addr)
         self.__ttl = ttl
         self.__tos = tos
         self.__timeout = timeout
@@ -105,6 +114,35 @@ class Ping(object):
             return IPv6
         return IPv4
 
+    @staticmethod
+    def _get_src_addr(addr: Union[None, str, Iterable[str]]) -> Dict[int, str]:
+        """
+        Parse source addresses.
+
+        Parse source addresses and distribute them around address families.
+
+        Args:
+            addr: One of:
+                * None - detect source address automatically.
+                * str - containing source address for one address family.
+                * Iterable of strings, containing multiple addresses
+                    which to be distributed among the address families.
+                    First address for given address family will be used.
+
+        Returns:
+            Dict of `address family` -> `source address`.
+        """
+        if not addr:
+            return {}
+        if isinstance(addr, str):
+            return {Ping._get_afi(addr): addr}
+        r: Dict[int, str] = {}
+        for a in addr:
+            afi = Ping._get_afi(a)
+            if afi not in r:
+                r[afi] = a
+        return r
+
     def __get_socket(self: "Ping", address: str) -> PingSocket:
         """
         Get PingSocket instace.
@@ -124,6 +162,7 @@ class Ping(object):
             sock = PingSocket(
                 afi=afi,
                 size=self.__size,
+                src_addr=self.__src_addr.get(afi),
                 ttl=self.__ttl,
                 tos=self.__tos,
                 timeout=self.__timeout,

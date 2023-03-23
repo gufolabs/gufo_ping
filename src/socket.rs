@@ -22,13 +22,13 @@ use std::time::Instant;
 const MAX_SIZE: usize = 4096;
 const ICMP_SIZE: usize = 8;
 
-enum AFI {
+enum Afi {
     IPV4,
     IPV6,
 }
 
 struct Proto {
-    afi: AFI,
+    afi: Afi,
     domain: Domain,
     protocol: Protocol,
     ip_header_size: usize,
@@ -37,7 +37,7 @@ struct Proto {
 }
 
 static IPV4: Proto = Proto {
-    afi: AFI::IPV4,
+    afi: Afi::IPV4,
     domain: Domain::IPV4,
     protocol: Protocol::ICMPV4,
     ip_header_size: 20,
@@ -46,7 +46,7 @@ static IPV4: Proto = Proto {
 };
 
 static IPV6: Proto = Proto {
-    afi: AFI::IPV6,
+    afi: Afi::IPV6,
     domain: Domain::IPV6,
     protocol: Protocol::ICMPV6,
     ip_header_size: 0, // No IPv6 header is passed over socket
@@ -96,6 +96,15 @@ impl SocketWrapper {
         })
     }
 
+    ///
+    fn bind(&mut self, addr: &str) -> PyResult<()> {
+        let src_addr: SockAddr = match self.proto.afi {
+            Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
+            Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
+        };
+        self.io.bind(&src_addr)?;
+        Ok(())
+    }
     /// Set default timeout, in nanoseconds
     fn set_timeout(&mut self, timeout: u64) -> PyResult<()> {
         self.timeout = timeout;
@@ -163,8 +172,8 @@ impl SocketWrapper {
     /// Normalize address
     fn clean_ip(&self, addr: String) -> PyResult<String> {
         Ok(match self.proto.afi {
-            AFI::IPV4 => SocketAddrV4::new(addr.parse()?, 0).ip().to_string(),
-            AFI::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).ip().to_string(),
+            Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).ip().to_string(),
+            Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).ip().to_string(),
         })
     }
 
@@ -172,8 +181,8 @@ impl SocketWrapper {
     fn send(&mut self, addr: String, request_id: u16, seq: u16, size: usize) -> PyResult<()> {
         // Parse IP address
         let to_addr: SockAddr = match self.proto.afi {
-            AFI::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
-            AFI::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
+            Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
+            Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
         };
         // Get timestamp
         let ts = self.get_ts();
@@ -219,8 +228,8 @@ impl SocketWrapper {
                     };
                     // Convert SockAddr to printable form
                     let paddr = match self.proto.afi {
-                        AFI::IPV4 => addr.as_socket_ipv4().unwrap().ip().to_string(),
-                        AFI::IPV6 => addr.as_socket_ipv6().unwrap().ip().to_string(),
+                        Afi::IPV4 => addr.as_socket_ipv4().unwrap().ip().to_string(),
+                        Afi::IPV6 => addr.as_socket_ipv6().unwrap().ip().to_string(),
                     };
                     r.insert(pkt.get_sid(paddr.clone()), delay);
                     self.sessions
@@ -290,7 +299,7 @@ impl SocketWrapper {
         use libc::sock_filter;
 
         match self.proto.afi {
-            AFI::IPV4 => {
+            Afi::IPV4 => {
                 let filters = [
                     op(0x30, 0, 0, 0x00000014),                           // ldb [20]
                     op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x0, drop
@@ -303,7 +312,7 @@ impl SocketWrapper {
                 ];
                 self.io.attach_filter(&filters)?;
             }
-            AFI::IPV6 => {
+            Afi::IPV6 => {
                 let filters = [
                     op(0x30, 0, 0, 0x00000000),                           // ldb [0]
                     op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x81, drop

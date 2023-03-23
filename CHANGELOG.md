@@ -8,6 +8,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ## [Unreleased]
 
+### Added
+
+* Ping `src_addr` parameter to set source addresses of outgoing packets.
+
 ### Changed
 
 * docs: license.md renamed to LICENSE.md

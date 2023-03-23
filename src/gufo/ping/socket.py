@@ -37,6 +37,7 @@ class PingSocket(object):
     Args:
         afi: Address Family. Either 4 or 6
         size: Set outgoing packet's size, including IP header.
+        src_address: Optional source address of outgoing packets.
         ttl: Set outgoing packet's TTL.
             Use OS defaults when empty.
         tos: Set DSCP/TOS field to outgoing packets.
@@ -56,6 +57,7 @@ class PingSocket(object):
         self: "PingSocket",
         afi: int = IPv4,
         size: int = 64,
+        src_addr: Optional[str] = None,
         ttl: Optional[int] = None,
         tos: Optional[int] = None,
         timeout: float = 1.0,
@@ -80,6 +82,8 @@ class PingSocket(object):
         # Create and initialize wrapped socket
         self.__sock: SocketProto = cast(SocketProto, SocketWrapper(afi))
         self.__sock.set_timeout(int(timeout * NS))
+        if src_addr:
+            self.__sock.bind(src_addr)
         if ttl is not None:
             self.__sock.set_ttl(ttl)
         if tos is not None:

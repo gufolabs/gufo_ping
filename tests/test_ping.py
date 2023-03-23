@@ -6,7 +6,7 @@
 
 # Python modules
 import asyncio
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 # Third-party modules
 import pytest
@@ -14,7 +14,7 @@ import pytest
 # Gufo Labs modules
 from gufo.ping import Ping
 
-from .util import is_denied
+from .util import as_str, caps
 
 
 @pytest.mark.parametrize(
@@ -25,7 +25,7 @@ def test_get_afi(address: str, expected: int) -> None:
     assert afi == expected
 
 
-@pytest.mark.skipif(is_denied(), reason="Permission denied")
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
 @pytest.mark.parametrize(
     ("address", "expected"),
     [
@@ -44,7 +44,7 @@ def test_ping(address: str, expected: bool) -> None:
         assert rtt is None
 
 
-@pytest.mark.skipif(is_denied(), reason="Permission denied")
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
 @pytest.mark.parametrize(
     ("address", "expected"),
     [
@@ -54,15 +54,14 @@ def test_ping(address: str, expected: bool) -> None:
     ],
 )
 def test_iter_rtt(address: str, expected: bool) -> None:
-    async def inner() -> None:
-        r = []
+    async def inner() -> List[Optional[float]]:
+        r: List[Optional[float]] = []
         async for rtt in ping.iter_rtt(address, count=N_PROBES):
             r.append(rtt)
         return r
 
     N_PROBES = 5
     ping = Ping()
-    res = []
     res = asyncio.run(inner())
     assert len(res) == N_PROBES
     if expected:
@@ -73,7 +72,8 @@ def test_iter_rtt(address: str, expected: bool) -> None:
         assert nr == N_PROBES
 
 
-@pytest.mark.skipif(is_denied(), reason="Permission denied")
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
+@pytest.mark.parametrize("addr", caps.loopbacks)
 @pytest.mark.parametrize(
     ("cfg", "expected"),
     [
@@ -99,10 +99,44 @@ def test_iter_rtt(address: str, expected: bool) -> None:
         ({"coarse": True}, True),
         ({"coarse": False}, True),
     ],
+    ids=as_str,
 )
-def test_valid_ping_settings(cfg: Dict[str, Any], expected: bool) -> None:
+def test_valid_ping_settings(
+    addr: str, cfg: Dict[str, Any], expected: bool
+) -> None:
     if expected:
-        asyncio.run(Ping(**cfg).ping("127.0.0.1"))
+        asyncio.run(Ping(**cfg).ping(addr))
     else:
         with pytest.raises(ValueError):
-            asyncio.run(Ping(**cfg).ping("127.0.0.1"))
+            asyncio.run(Ping(**cfg).ping(addr))
+
+
+@pytest.mark.parametrize(
+    ("src_addr", "expected"),
+    [
+        (None, {}),
+        ("127.0.0.1", {4: "127.0.0.1"}),
+        ("::1", {6: "::1"}),
+        ((), {}),
+        ([], {}),
+        (("127.0.0.1", "::1"), {4: "127.0.0.1", 6: "::1"}),
+        (["127.0.0.1", "::1"], {4: "127.0.0.1", 6: "::1"}),
+        (("::1", "127.0.0.1"), {4: "127.0.0.1", 6: "::1"}),
+        (("127.0.0.1", "127.0.0.2"), {4: "127.0.0.1"}),
+        (("127.0.0.2", "127.0.0.1", "::1", "::2"), {4: "127.0.0.2", 6: "::1"}),
+    ],
+    ids=as_str,
+)
+def test_src_addr(
+    src_addr: Union[None, str, Iterable[str]], expected: Dict[int, str]
+) -> None:
+    assert Ping._get_src_addr(src_addr) == expected
+
+
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
+@pytest.mark.parametrize("addr", caps.loopbacks)
+def test_src_ping(addr: str) -> None:
+    ping = Ping(src_addr=addr)
+    rtt = asyncio.run(ping.ping(addr))
+    assert isinstance(rtt, float)
+    assert rtt > 0.0

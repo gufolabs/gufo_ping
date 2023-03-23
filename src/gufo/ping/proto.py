@@ -30,6 +30,14 @@ class SocketProto(Protocol):
         """
         ...
 
+    def bind(self: "SocketProto", addr: str) -> None:
+        """
+        Bind to source address.
+
+        Args:
+            addr: Source Address
+        """
+
     def set_ttl(self: "SocketProto", ttl: int) -> None:
         """
         Change outgoing packets' time-to-live field.

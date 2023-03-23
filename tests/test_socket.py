@@ -13,10 +13,10 @@ import pytest
 # Gufo Labs modules
 from gufo.ping.socket import PingSocket
 
-from .util import is_denied
+from .util import caps
 
 
-@pytest.mark.skipif(is_denied(), reason="Permission denied")
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
 @pytest.mark.parametrize(
     ("afi", "expected"), [(1, False), (4, True), (6, True)]
 )
@@ -31,7 +31,7 @@ def test_afi(afi: int, expected: bool) -> None:
     asyncio.run(inner_ok() if expected else inner_fail())
 
 
-@pytest.mark.skipif(is_denied(), reason="Permission denied")
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
 def test_empty_read() -> None:
     async def inner() -> None:
         s = PingSocket(afi=4)
@@ -41,7 +41,7 @@ def test_empty_read() -> None:
     asyncio.run(inner())
 
 
-@pytest.mark.skipif(is_denied(), reason="Permission denied")
+@pytest.mark.skipif(caps.is_denied, reason="Permission denied")
 @pytest.mark.parametrize(
     ("afi", "addr", "expected"),
     [
