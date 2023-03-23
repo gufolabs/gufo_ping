@@ -2,7 +2,7 @@ site_name: Gufo Ping
 site_description: Gufo Ping Documentation
 site_author: Gufo Labs
 site_url: "https://docs.gufolabs.com/gufo_ping/"
-copyright: "&copy; 2022, Gufo Labs"
+copyright: "&copy; 2022-23, Gufo Labs"
 site_dir: dist/docs/
 repo_url: https://github.com/gufolabs/gufo_ping/
 repo_name: GitHub
