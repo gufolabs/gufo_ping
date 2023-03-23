@@ -37,7 +37,7 @@ class PingSocket(object):
     Args:
         afi: Address Family. Either 4 or 6
         size: Set outgoing packet's size, including IP header.
-        src_address: Optional source address of outgoing packets.
+        src_addr: Optional source address of outgoing packets.
         ttl: Set outgoing packet's TTL.
             Use OS defaults when empty.
         tos: Set DSCP/TOS field to outgoing packets.
