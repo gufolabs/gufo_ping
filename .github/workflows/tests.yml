@@ -48,7 +48,7 @@ jobs:
       - name: Check Formatting
         run: black --check examples/ src/ tests/
 
-      - name: Check Flake8
+      - name: Check Ruff
         run: ruff -q examples/ src/ tests/
 
       - name: Check Mypy
