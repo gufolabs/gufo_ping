@@ -32,8 +32,18 @@ class Ping(object):
                 First address for given address family will be used.
         ttl: Set outgoing packet's TTL.
             Use OS defaults when empty.
-        tos: Set DSCP/TOS field to outgoing packets.
+
+            !!! warning
+
+                This option is ignored on IPv6 socket due to
+                issue [#4](https://github.com/gufolabs/gufo_ping/issues/4)
+        tos: Set DSCP/TOS/TCLASS field to outgoing packets.
             Use OS defaults when empty.
+
+            !!! warning
+
+                This option is ignored on IPv6 socket due to
+                issue [#2](https://github.com/gufolabs/gufo_ping/issues/2)
         timeout: Default timeout in seconds.
         send_buffer_size: Send buffer size.
             Use OS defaults when empty.
@@ -163,8 +173,8 @@ class Ping(object):
                 afi=afi,
                 size=self.__size,
                 src_addr=self.__src_addr.get(afi),
-                ttl=self.__ttl,
-                tos=self.__tos,
+                ttl=self.__ttl if afi == 4 else None,
+                tos=self.__tos if afi == 4 else None,
                 timeout=self.__timeout,
                 send_buffer_size=self.__send_buffer_size,
                 recv_buffer_size=self.__recv_buffer_size,

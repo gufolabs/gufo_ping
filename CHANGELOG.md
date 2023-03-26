@@ -14,6 +14,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Changed
 
+* Ping's `ttl` and `tos` options are temporary ignored on IPv6
 * docs: license.md renamed to LICENSE.md
 
 ### Infrastructure
