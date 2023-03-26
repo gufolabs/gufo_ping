@@ -14,5 +14,5 @@ Attributes:
 # Gufo Labs modules
 from .ping import Ping
 
-__version__: str = "0.2.4"
+__version__: str = "0.3.0"
 __all__ = ["Ping", "__version__"]
