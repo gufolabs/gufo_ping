@@ -6,11 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
-## [Unreleased]
-
-### Stoppers
-
-* musl build: [rust-lang/socket2#405](https://github.com/rust-lang/socket2/issues/405)
+## 0.3.0 -- 2023-05-02
 
 ### Added
 
