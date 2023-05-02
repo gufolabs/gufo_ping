@@ -5,7 +5,7 @@
 # ./tools/build/build-manylinux 3.8 3.9 3.10 3.11
 # expects RUST_VERSION and RUST_ARCH
 # ------------------------------------------------------------------------
-# Copyright (C) 2022, Gufo Labs
+# Copyright (C) 2022-23, Gufo Labs
 # ------------------------------------------------------------------------
 
 # set -x

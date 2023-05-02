@@ -25,7 +25,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * Adopt ruff
 * Build Python 3.11 wheels for manylinux2014
-* Rust 1.68.0
+* Rust 1.69
 * PyO3 0.18
 * socket2 0.5
 * devcontainer: Move `settings` to `customizations.vscode.settings`
