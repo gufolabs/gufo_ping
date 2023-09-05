@@ -1,7 +1,14 @@
-# Gufo Ping Documentation
-
-*Gufo Ping* is the accelerated Python asyncio IPv4/IPv6 ping implementation.
-
+---
+template: index.html
+hide:
+    - navigation
+    - toc
+hero:
+    title: Gufo Ping
+    subtitle: The accelerated Python asyncio IPv4/IPv6 ping implementation.
+    install_button: Getting Started
+    source_button: Source Code
+---
 ## The Ping Problem
 
 A common way of probing host availability over IP networks is to use ICMP echo probes. Almost every OS is packaged with the famous ping utility. But what if you need to embed

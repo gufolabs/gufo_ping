@@ -1,3 +1,7 @@
+---
+hide:
+    - navigation
+---
 # Installation
 
 Install with the pip
@@ -10,7 +14,7 @@ $ pip install gufo_ping
 
 To check the installation just import the module
 
-```python
+``` python
 from gufo.ping import Ping
 ```
 
