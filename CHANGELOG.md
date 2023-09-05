@@ -16,6 +16,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * docs: Fancy front page
 
+### Infrastructure
+
+* devcontainer: YAML formatting on save
+
 ## 0.3.0 -- 2023-05-02
 
 ### Added
