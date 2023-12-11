@@ -47,7 +47,7 @@ So we define our function as `async`. We expect an address to ping as the
 
 First we need to create `Ping` object. `Ping` constructor offers a lots
 of configuration variables for fine-tuning. Refer to the 
-[Ping reference](../../reference/gufo/ping/ping#gufo.ping.ping.Ping)
+[Ping reference](../reference/gufo/ping/ping.md#gufo.ping.ping.Ping)
 for further details. Defaults are good enough for our tutorial, so
 we ommited them.
 
@@ -60,7 +60,7 @@ the `await` keyword. The only mandatory parameter is IP address.
 Gufo Ping detects IPv4/IPv6 usage, so all we need is to pass an address.
 Function may accept the additional parameters for fine-tuning,
 Refer to the
-[Ping.ping reference](../../reference/gufo/ping/ping#gufo.ping.ping.Ping.ping)
+[Ping.ping reference](../reference/gufo/ping/ping.md#gufo.ping.ping.Ping.ping)
 for details.
 
 Ping returns:
