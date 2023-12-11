@@ -53,6 +53,8 @@ class PingSocket(object):
             socket processing.
     """
 
+    VALID_AFI = (IPv4, IPv6)
+
     def __init__(
         self: "PingSocket",
         afi: int = IPv4,
@@ -67,7 +69,7 @@ class PingSocket(object):
         accelerated: bool = True,
     ) -> None:
         self.__force_del = False
-        if afi != IPv4 and afi != IPv6:
+        if afi not in self.VALID_AFI:
             msg = f"afi must be {IPv4} or {IPv6}"
             raise ValueError(msg)
         # Check settings
