@@ -19,6 +19,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Infrastructure
 
 * devcontainer: YAML formatting on save
+* Rust 1.74.1
+* devcontainer: Use Python 3.12
+* byteorder 1.5
+* pyo3 0.20
 
 ## 0.3.0 -- 2023-05-02
 
