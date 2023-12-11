@@ -58,7 +58,7 @@ jobs:
           -w /workdir 
           --user 0 
           quay.io/pypa/manylinux2014_${{ matrix.arch }}:latest
-          ./tools/build/build-many.sh 3.8 3.9 3.10 3.11
+          ./tools/build/build-many.sh 3.8 3.9 3.10 3.11 3.12
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v3
