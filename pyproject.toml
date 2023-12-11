@@ -153,3 +153,9 @@ where = ["src"]
 
 [tool.setuptools.dynamic]
 version = {attr = "gufo.ping.__version__"}
+
+[tool.mypy]
+explicit_package_bases = true
+mypy_path = ["src"]
+strict = true
+warn_unused_ignores = false
