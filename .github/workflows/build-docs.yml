@@ -10,6 +10,7 @@ on:
       - "docs/**"
       - "examples/**"
       - "src/**"
+      - "*.md"
     branches:
       - master
 jobs:
