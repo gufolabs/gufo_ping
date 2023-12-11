@@ -10,10 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
-### [Unreleased]
+### 0.3.1 -- 2023-12-11
 
 ### Added
 
+* Python 3.12 support.
 * docs: Fancy front page
 
 ### Infrastructure
