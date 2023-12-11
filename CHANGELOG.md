@@ -17,6 +17,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 * Python 3.12 support.
 * docs: Fancy front page
 
+## Changed
+
+* Use `manylinux_2_28` instead of `manylinux_2_24`.
+
 ### Infrastructure
 
 * devcontainer: YAML formatting on save
