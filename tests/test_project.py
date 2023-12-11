@@ -36,6 +36,7 @@ def _get_project_info() -> Tuple[str, str]:
             if not f.startswith(".")
             and not f.startswith("_")
             and not f.endswith(".egg-info")
+            and not f.endswith(".rs")
         ]
         assert len(d) == 1
         return d[0]
