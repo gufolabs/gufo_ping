@@ -86,6 +86,7 @@ max-complexity = 15
 "examples/*.py" = [
   "D100", # Missing docstring in public module
   "D103", # Missing docstring in public function
+  "RUF006", # Store a reference to the return value of `asyncio.create_task`
 ]
 "tests/*.py" = [
   "D100", # Missing docstring in public module
