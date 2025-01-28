@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: PingSocket implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-23, Gufo Labs
+# Copyright (C) 2022-25, Gufo Labs
 # ---------------------------------------------------------------------
 
 """
@@ -85,9 +85,9 @@ class PingSocket(object):
         self.__sock.set_timeout(int(timeout * NS))
         if src_addr:
             self.__sock.bind(src_addr)
-        if ttl is not None:
+        if ttl is not None and afi == IPv4:  # No socket2 method for IPv6
             self.__sock.set_ttl(ttl)
-        if tos is not None:
+        if tos is not None and afi == IPv4:  # No socket2 method for IPv6
             self.__sock.set_tos(tos)
         if send_buffer_size is not None:
             self.__sock.set_send_buffer_size(send_buffer_size)
