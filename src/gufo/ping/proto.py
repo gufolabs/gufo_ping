@@ -55,6 +55,15 @@ class SocketProto(Protocol):
         """
         ...
 
+    def set_tclass(self: "SocketProto", tclass: int) -> None:
+        """
+        Change outgoing packets' IPv6 TCLASS field.
+
+        Args:
+            tclass: TCLASS value.
+        """
+        ...
+
     def set_coarse(self: "SocketProto", ct: bool) -> None:
         """
         Switch between the internal timer implemenetation.

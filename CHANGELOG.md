@@ -16,6 +16,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * Python 3.13 support
 
+### Fixed
+
+* IPv6 TCLASS support
+
 ### Removed
 
 * Python 3.8 support

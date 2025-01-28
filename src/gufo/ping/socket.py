@@ -85,8 +85,11 @@ class PingSocket(object):
         self.__sock.set_timeout(int(timeout * NS))
         if src_addr:
             self.__sock.bind(src_addr)
-        if ttl is not None and afi == IPv4:  # No socket2 method for IPv6
-            self.__sock.set_ttl(ttl)
+        if ttl is not None:
+            if afi == IPv4:
+                self.__sock.set_ttl(ttl)
+            elif afi == IPv6:
+                self.__sock.set_tclass(ttl)
         if tos is not None and afi == IPv4:  # No socket2 method for IPv6
             self.__sock.set_tos(tos)
         if send_buffer_size is not None:

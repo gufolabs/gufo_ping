@@ -122,6 +122,11 @@ impl SocketWrapper {
         self.io.set_tos(tos)?;
         Ok(())
     }
+    /// Set default outgoung packet's IPv6 TCLASS
+    fn set_tclass(&self, tclass: u32) -> PyResult<()> {
+        self.io.set_tclass_v6(tclass)?;
+        Ok(())
+    }
 
     /// Set internal socket's send buffer size
     fn set_send_buffer_size(&self, size: usize) -> PyResult<()> {
