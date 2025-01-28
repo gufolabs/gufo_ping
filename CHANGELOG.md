@@ -16,6 +16,11 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * Use Python 1.13 in devcontainer
 * Rust 1.84.0
+* mkdocs-material 9.5.44
+* Ruff 0.7.2
+* mypy 1.13.0
+* pytest 8.3.3
+* Coverage 7.6.4
 
 ## 0.3.1 -- 2023-12-11
 
