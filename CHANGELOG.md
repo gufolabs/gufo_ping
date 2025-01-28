@@ -25,6 +25,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 * Use Python 1.13 in devcontainer
 * Use Ruff for formatting
 * Rust 1.84.0
+* PyO3 0.23
 * mkdocs-material 9.5.44
 * Ruff 0.7.2
 * mypy 1.13.0
