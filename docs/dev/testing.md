@@ -20,7 +20,7 @@ Compiled packages will be available in the `dist/` directory.
 To rebuild Rust modules for debug and testing:
 
 ```
-$ python setup.py build_rust
+$ python -m pip install --editable .
 ```
 
 ## Running tests
@@ -49,12 +49,12 @@ requirement in our [Code Quality](codequality.md) standards. To check code
 formatting run:
 
 ```
-$ black --check examples/ src/ tests/
+$ ruff format --check examples/ src/ tests/
 ```
 
 To fix formatting errors run:
 ```
-$ black examples/ src/ tests/
+$ ruff format examples/ src/ tests/
 ```
 
 We recommend setting python code formatting on file saving
@@ -68,7 +68,7 @@ requirement in our [Code Quality](codequality.md) standards. To check code
 for linting errors run:
 
 ```
-$ ruff examples/ src/ tests/
+$ ruff check examples/ src/ tests/
 ```
 
 ### Python Code Static Checks

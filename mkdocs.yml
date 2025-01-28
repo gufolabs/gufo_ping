@@ -15,15 +15,16 @@ nav:
       - Series of Requests: examples/series.md
   - Reference: reference/
   - Developers' Guide:
-      - Developer's Environment: environment.md
-      - Building and Testing: testing.md
-      - Common Tasks: devcommon.md
-      - Code Quality: codequality.md
-      - Code Base: codebase.md
-      - Contributing Guide: CONTRIBUTING.md
-      - Code of Conduct: CODE_OF_CONDUCT.md
-      - Supported Platforms: platforms.md
-      - Supported Standards: standards.md
+      - Overview: dev/index.md
+      - Developer's Environment: dev/environment.md
+      - Building and Testing: dev/testing.md
+      - Common Tasks: dev/common.md
+      - Code Quality: dev/codequality.md
+      - Code Base: dev/codebase.md
+      - Contributing Guide: dev/CONTRIBUTING.md
+      - Code of Conduct: dev/CODE_OF_CONDUCT.md
+      - Supported Platforms: dev/platforms.md
+      - Supported Standards: dev/standards.md
   - FAQ: faq.md
   - Changelog: CHANGELOG.md
   - License: LICENSE.md
