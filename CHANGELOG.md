@@ -14,7 +14,8 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Infrastructure
 
-*  Rust 1.84.0
+* Use Python 1.13 in devcontainer
+* Rust 1.84.0
 
 ## 0.3.1 -- 2023-12-11
 
