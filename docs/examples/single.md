@@ -111,4 +111,4 @@ None
 After second or so of awaiting we finally got a `None`, which means our
 request is timed out.
 
-[RFC-5737]: https://datatracker.ietf.org/doc/html/rfc5737
+[RFC-5737]: https://www.rfc-editor.org/rfc/rfc5737.html

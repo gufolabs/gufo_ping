@@ -16,9 +16,9 @@ Gufo Ping implements and is guided by the following standards:
 * [PEP8][PEP8]: Style Guide for Python Code
 * [PEP561][PEP561]: Distributing and Packaging Type Information
 
-[RFC-792]: https://datatracker.ietf.org/doc/html/rfc792
-[RFC-1071]: https://datatracker.ietf.org/doc/html/rfc1071
-[RFC-2474]: https://datatracker.ietf.org/doc/html/rfc2474
-[RFC-4443]: https://datatracker.ietf.org/doc/html/rfc4443
+[RFC-792]: https://www.rfc-editor.org/rfc/rfc792.html
+[RFC-1071]: https://www.rfc-editor.org/rfc/rfc1071.html
+[RFC-2474]: https://www.rfc-editor.org/rfc/rfc2474.html
+[RFC-4443]: https://www.rfc-editor.org/rfc/rfc4443.html
 [PEP8]: https://peps.python.org/pep-0008/
 [PEP561]: https://peps.python.org/pep-0561/
