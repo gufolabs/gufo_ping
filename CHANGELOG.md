@@ -12,6 +12,14 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ## [Unreleased]
 
+### Added
+
+* Python 3.13 support
+
+### Removed
+
+* Python 3.8 support
+
 ### Infrastructure
 
 * Use Python 1.13 in devcontainer
