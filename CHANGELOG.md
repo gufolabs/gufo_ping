@@ -31,6 +31,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 * mypy 1.13.0
 * pytest 8.3.3
 * Coverage 7.6.4
+* Bump GitHub actions
 
 ## 0.3.1 -- 2023-12-11
 
@@ -79,8 +80,8 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Infrastructure
 
-* Use `actions/checkout@v3`
-* Use `actions/cache@v3`
+* Use `actions/checkout@v4`
+* Use `actions/cache@v4`
 * Project structure tests
 * CI workflows tests
 * Rust 1.66.0
