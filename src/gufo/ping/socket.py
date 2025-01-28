@@ -79,7 +79,6 @@ class PingSocket(object):
         if tos is not None and (tos < 0 or tos > MAX_TOS):
             msg = f"tos must be in 0..{MAX_TOS} range"
             raise ValueError(msg)
-        #
         self.__size = size
         # Create and initialize wrapped socket
         self.__sock: SocketProto = cast(SocketProto, SocketWrapper(afi))

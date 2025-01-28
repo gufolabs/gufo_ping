@@ -23,8 +23,7 @@
             "settings": {
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
                 "[python]": {
-                    "editor.defaultFormatter": "ms-python.black-formatter",
-                    "black-formatter.path": "/usr/local/bin/black",
+                    "editor.defaultFormatter": "charliermarsh.ruff",
                     "editor.formatOnSave": true,
                     "editor.codeActionsOnSave": {
                         "source.fixAll": true

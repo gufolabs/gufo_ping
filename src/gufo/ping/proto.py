@@ -18,8 +18,7 @@ class SocketProto(Protocol):
     implementing low-level details of the PingSocket.
     """
 
-    def __init__(self: "SocketProto", afi: int) -> None:
-        ...
+    def __init__(self: "SocketProto", afi: int) -> None: ...
 
     def set_timeout(self: "SocketProto", timeout: int) -> None:
         """
