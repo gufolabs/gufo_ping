@@ -46,6 +46,15 @@ class SocketProto(Protocol):
         """
         ...
 
+    def set_unicast_hops(self: "SocketProto", ttl: int) -> None:
+        """
+        Change outgoing packets' unicast hops (IPv6 TTL).
+
+        Args:
+            ttl: TTL value.
+        """
+        ...
+
     def set_tos(self: "SocketProto", tos: int) -> None:
         """
         Change outgoing packets' ToS/DSCP field.

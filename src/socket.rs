@@ -116,7 +116,11 @@ impl SocketWrapper {
         self.io.set_ttl(ttl)?;
         Ok(())
     }
-
+    /// Set IPv6 unicast hops
+    fn set_unicast_hops(&self, ttl: u32) -> PyResult<()> {
+        self.io.set_unicast_hops_v6(ttl)?;
+        Ok(())
+    }
     /// Set default outgoing packets' ToS
     fn set_tos(&self, tos: u32) -> PyResult<()> {
         self.io.set_tos(tos)?;

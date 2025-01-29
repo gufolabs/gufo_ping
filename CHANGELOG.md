@@ -18,7 +18,8 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Fixed
 
-* IPv6 TCLASS support
+* [#2][#2] BUG: Error setting DSCP/ToS field for IPv6 ICMP packets
+* [#4][#4] BUG: Setting ttl fails for IPv6
 
 ### Removed
 
@@ -146,3 +147,6 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Added
 
 * Initial release.
+
+[#2]: https://github.com/gufolabs/gufo_ping/issues/2
+[#4]: https://github.com/gufolabs/gufo_ping/issues/4
