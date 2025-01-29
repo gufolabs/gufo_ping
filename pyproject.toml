@@ -68,7 +68,7 @@ select = [
 ]
 # Always autofix, but never try to fix `F401` (unused imports).
 fix = true
-ignore = ["D203", "D212", "D107", "PLR0913", "S311"]
+ignore = ["D203", "D212", "D107", "PLR0913", "S311", "PLR0912"]
 unfixable = ["F401"]
 
 [tool.ruff.flake8-quotes]

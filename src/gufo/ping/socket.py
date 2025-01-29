@@ -90,7 +90,7 @@ class PingSocket(object):
                 self.__sock.set_ttl(ttl)
             elif afi == IPv6:
                 self.__sock.set_unicast_hops(ttl)
-        if tos is not None and afi:
+        if tos is not None:
             if afi == IPv4:
                 self.__sock.set_tos(tos)
             elif afi == IPv6:
