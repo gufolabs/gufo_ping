@@ -153,7 +153,7 @@ jobs:
           path: wheelhouse/*.whl
 
   build-wheel-macos:
-    runs-on: macos-11
+    runs-on: macos-13
     needs: build-sdist
     strategy:
       fail-fast: true
