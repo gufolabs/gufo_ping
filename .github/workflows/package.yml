@@ -187,6 +187,9 @@ jobs:
 
   publish:
     runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      id-token: write
     needs:
       - build-sdist
       - build-manylinux_2_17-x86_64
@@ -208,17 +211,8 @@ jobs:
       - name: Show Artefacts
         run: ls -lhR dist/
 
-      - name: Publish distribution 📦 to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-          print_hash: true
-          skip_existing: true
-
       - name: Publish distribution 📦 to PyPI
         if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
           print_hash: true
