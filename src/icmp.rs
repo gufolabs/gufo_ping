@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------
 // Gufo Ping: ICMP packet constructing and parsing
 // ---------------------------------------------------------------------
-// Copyright (C) 2022-23, Gufo Labs
+// Copyright (C) 2022-25, Gufo Labs
 // ---------------------------------------------------------------------
 
 use byteorder::{BigEndian, ByteOrder};
@@ -78,15 +78,15 @@ impl IcmpPacket {
     // @todo: Replace with MaybeUninit::slice_assume_init_mut
     // when `maybe_uninit_slice` feature will be stabilized
     #[inline(always)]
-    unsafe fn slice_assume_init_mut(slice: &mut [MaybeUninit<u8>]) -> &mut [u8] {
-        &mut *(slice as *mut [MaybeUninit<u8>] as *mut [u8])
+    fn slice_assume_init_mut(slice: &mut [MaybeUninit<u8>]) -> &mut [u8] {
+        unsafe { &mut *(slice as *mut [MaybeUninit<u8>] as *mut [u8]) }
     }
 
     /// Write packet to buffer
     pub fn write(&self, buf: &mut [MaybeUninit<u8>]) -> usize {
         //
         // Assume buffer initialized
-        let buf = unsafe { Self::slice_assume_init_mut(&mut buf[..self.size]) };
+        let buf = Self::slice_assume_init_mut(&mut buf[..self.size]);
         // Write type, fill code and checksum with 0
         BigEndian::write_u32(buf, (self.icmp_type as u32) << 24);
         // Request id, 2 octets

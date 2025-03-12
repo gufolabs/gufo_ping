@@ -83,11 +83,11 @@ impl SocketWrapper {
         // Mark socket as non-blocking
         io.set_nonblocking(true)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         Ok(Self {
             proto,
             io,
-            signature: rng.gen(),
+            signature: rng.random(),
             sessions: BTreeSet::new(),
             timeout: 1_000_000_000,
             start: Instant::now(),
@@ -96,7 +96,6 @@ impl SocketWrapper {
         })
     }
 
-    ///
     fn bind(&mut self, addr: &str) -> PyResult<()> {
         let src_addr: SockAddr = match self.proto.afi {
             Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
@@ -204,7 +203,7 @@ impl SocketWrapper {
             size - self.proto.ip_header_size,
         );
         let n = pkt.write(&mut self.buf);
-        let buf = unsafe { Self::slice_assume_init_ref(&self.buf[..n]) };
+        let buf = Self::slice_assume_init_ref(&self.buf[..n]);
         self.io
             .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
@@ -222,8 +221,7 @@ impl SocketWrapper {
             if size < self.proto.ip_header_size + ICMP_SIZE {
                 continue;
             }
-            let buf =
-                unsafe { Self::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]) };
+            let buf = Self::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
             // Parse packet
             if let Ok(pkt) = IcmpPacket::try_from(buf) {
                 if pkt.is_match(self.proto.icmp_reply_type, self.signature) {
@@ -246,11 +244,7 @@ impl SocketWrapper {
                 }
             }
         }
-        if !r.is_empty() {
-            Ok(Some(r))
-        } else {
-            Ok(None)
-        }
+        if !r.is_empty() { Ok(Some(r)) } else { Ok(None) }
     }
 
     /// Get list of session ids of expired sessions
@@ -359,8 +353,8 @@ impl SocketWrapper {
     // @todo: Replace with BufRead.filled()
     // @todo: Replace when `maybe_uninit_slice` feature
     // will be stabilized
-    const unsafe fn slice_assume_init_ref(slice: &[MaybeUninit<u8>]) -> &[u8] {
+    const fn slice_assume_init_ref(slice: &[MaybeUninit<u8>]) -> &[u8] {
         //MaybeUninit::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
-        &*(slice as *const [MaybeUninit<u8>] as *const [u8])
+        unsafe { &*(slice as *const [MaybeUninit<u8>] as *const [u8]) }
     }
 }

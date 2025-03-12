@@ -10,7 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
-## 0.4.0 - 2024-01-29
+## [Unreleased]
+
+### Infrastructure
+
+* Rust 1.85.0
+* Rust edition 2024
+
+## 0.4.0 - 2025-01-29
 
 ### Added
 

@@ -1,5 +1,5 @@
 [package]
-edition = "2021"
+edition = "2024"
 name = "gufo_ping"
 version = "0.4.0"
 
@@ -14,7 +14,7 @@ byteorder = "1.5"
 coarsetime = "0.1"
 internet-checksum = "0.2"
 pyo3 = {version = "0.23", features = ["extension-module"]}
-rand = "0.8"
+rand = "0.9"
 socket2 = {version = "0.5", features = ["all"]}
 
 [target.'cfg(target_os = "linux")'.dependencies]
