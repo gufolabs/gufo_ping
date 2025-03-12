@@ -12,6 +12,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ## [Unreleased]
 
+## Added
+
+* ARM64 binary wheels
+
 ### Infrastructure
 
 * Rust 1.85.0
