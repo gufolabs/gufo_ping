@@ -3,6 +3,7 @@
 *Gufo Ping is the accelerated Python asyncio IPv4/IPv6 ping implementation.*
 
 [![PyPi version](https://img.shields.io/pypi/v/gufo_ping.svg)](https://pypi.python.org/pypi/gufo_ping/)
+![Downloads](https://img.shields.io/pypi/dw/gufo_ping)
 ![Python Versions](https://img.shields.io/pypi/pyversions/gufo_ping)
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 ![Build](https://img.shields.io/github/actions/workflow/status/gufolabs/gufo_ping/tests.yml?branch=master)
