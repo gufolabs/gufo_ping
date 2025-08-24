@@ -38,6 +38,11 @@ exclude = [".git", "build", "dist"]
 line-length = 79
 # Assume Python 3.9
 target-version = "py39"
+# Always autofix, but never try to fix `F401` (unused imports).
+fix = true
+
+[tool.ruff.lint]
+ignore = ["D203", "D212", "D107", "PLR0913", "S311", "PLR0912"]
 # Enable
 select = [
   "E", # Pycodestyle Error
@@ -66,21 +71,18 @@ select = [
   "PIE", # flake8-pie
   "RUF", # ruff specific
 ]
-# Always autofix, but never try to fix `F401` (unused imports).
-fix = true
-ignore = ["D203", "D212", "D107", "PLR0913", "S311", "PLR0912"]
 unfixable = ["F401"]
 
-[tool.ruff.flake8-quotes]
+[tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 15
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Ignore `E402` (import violations) in all `__init__.py` files
 "__init__.py" = ["E402"]
 "examples/*.py" = [

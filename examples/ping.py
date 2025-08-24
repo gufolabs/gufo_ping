@@ -15,7 +15,7 @@ async def main(address: str, size: int = 64, count: int = 4) -> None:
         else:
             print(
                 f"{size} bytes from {address}: "
-                f"icmp_seq={n} time={r*1000.0:.3f}ms"
+                f"icmp_seq={n} time={r * 1000.0:.3f}ms"
             )
             received += 1
         n += 1
