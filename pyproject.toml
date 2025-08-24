@@ -14,7 +14,7 @@ directory = "dist/coverage"
 
 [tool.cibuildwheel]
 before-test = "pip install -e {project}[test]"
-test-command = "pytest -v {project}/tests"
+test-command = "cd {project} && pytest -v tests/"
 
 [tool.cibuildwheel.linux]
 before-all = "./tools/build/setup-rust.sh && pip install -e .[build]"
