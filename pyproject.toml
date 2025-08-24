@@ -122,6 +122,7 @@ classifiers = [
   "Operating System :: POSIX :: Linux",
   "Typing :: Typed",
 ]
+description = "Gufo Ping is the accelerated Python asyncio IPv4/IPv6 ping implementation"
 dynamic = ["version"]
 keywords = ["error"]
 license = {text = "BSD 3-Clause License"}
