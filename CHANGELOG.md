@@ -14,6 +14,9 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Infrastructure
 
+* IPython 9.4.0
+* ruff 0.11.2
+
 ### Removed
 
 * Python 3.8 support
