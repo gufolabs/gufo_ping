@@ -28,7 +28,7 @@ $ python -m pip install --editable .
 Rebuild rust modules, if changed:
 
 ```
-$ python setup.py develop
+python -m pip install --editable .
 ```
 
 To run the test suit:
