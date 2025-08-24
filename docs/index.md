@@ -44,6 +44,7 @@ Gufo Ping is really fast, allowing to probe 100 000+ hosts at once.
 * Clean async API.
 * IPv4/IPv6 support.
 * High-performance.
+* Built with security in mind.
 * Full Python typing support.
 * Editor completion.
 * Well-tested, battle-proven code.
