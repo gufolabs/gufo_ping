@@ -81,7 +81,7 @@ do
     echo "Upgrade pip..."
     pip install --upgrade pip
     echo "Setup build dependencies..."
-    pip install -r -e .[build,test]
+    pip install -e .[build,test]
     echo "Building wheel..."
     empty_dir "${DIST}"
     empty_dir "${BUILD}"

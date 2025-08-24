@@ -32,7 +32,7 @@ jobs:
       # Install dependencies
       - name: Install Dependencies
         run: |
-          pip install -IU -r -e .[docs]
+          pip install -IU -e .[docs]
 
       # Build documentationn
       - name: Build & Deploy Docs
