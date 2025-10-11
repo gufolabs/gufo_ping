@@ -15,6 +15,8 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Infrastructure
 
 * Rust 1.90
+* PyO3 0.26
+* socket2 0.6
 * Ruff 0.14.0
 * Mypy 1.18.2
 * Pytest 8.4.2

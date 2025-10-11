@@ -11,7 +11,7 @@ use pyo3::{
     prelude::*,
 };
 use rand::Rng;
-use socket2::{Domain, Protocol, SockAddr, Socket, Type};
+use socket2::{Domain, Protocol, SockAddr, SockFilter, Socket, Type};
 use std::collections::{BTreeSet, HashMap};
 use std::convert::TryFrom;
 use std::mem::MaybeUninit;
@@ -112,7 +112,7 @@ impl SocketWrapper {
 
     /// Set default outgoing packets' TTL
     fn set_ttl(&self, ttl: u32) -> PyResult<()> {
-        self.io.set_ttl(ttl)?;
+        self.io.set_ttl_v4(ttl)?;
         Ok(())
     }
     /// Set IPv6 unicast hops
@@ -122,7 +122,7 @@ impl SocketWrapper {
     }
     /// Set default outgoing packets' ToS
     fn set_tos(&self, tos: u32) -> PyResult<()> {
-        self.io.set_tos(tos)?;
+        self.io.set_tos_v4(tos)?;
         Ok(())
     }
     /// Set default outgoung packet's IPv6 TCLASS
@@ -223,25 +223,25 @@ impl SocketWrapper {
             }
             let buf = Self::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
             // Parse packet
-            if let Ok(pkt) = IcmpPacket::try_from(buf) {
-                if pkt.is_match(self.proto.icmp_reply_type, self.signature) {
-                    // Measure RTT
-                    let ts = self.get_ts();
-                    let pkt_ts = pkt.get_ts();
-                    let delay = if ts > pkt_ts {
-                        ts - pkt_ts
-                    } else {
-                        1 // Minimal delay
-                    };
-                    // Convert SockAddr to printable form
-                    let paddr = match self.proto.afi {
-                        Afi::IPV4 => addr.as_socket_ipv4().unwrap().ip().to_string(),
-                        Afi::IPV6 => addr.as_socket_ipv6().unwrap().ip().to_string(),
-                    };
-                    r.insert(pkt.get_sid(paddr.clone()), delay);
-                    self.sessions
-                        .remove(&Session::new(&pkt.get_sid(paddr), pkt_ts + self.timeout));
-                }
+            if let Ok(pkt) = IcmpPacket::try_from(buf)
+                && pkt.is_match(self.proto.icmp_reply_type, self.signature)
+            {
+                // Measure RTT
+                let ts = self.get_ts();
+                let pkt_ts = pkt.get_ts();
+                let delay = if ts > pkt_ts {
+                    ts - pkt_ts
+                } else {
+                    1 // Minimal delay
+                };
+                // Convert SockAddr to printable form
+                let paddr = match self.proto.afi {
+                    Afi::IPV4 => addr.as_socket_ipv4().unwrap().ip().to_string(),
+                    Afi::IPV6 => addr.as_socket_ipv6().unwrap().ip().to_string(),
+                };
+                r.insert(pkt.get_sid(paddr.clone()), delay);
+                self.sessions
+                    .remove(&Session::new(&pkt.get_sid(paddr), pkt_ts + self.timeout));
             }
         }
         if !r.is_empty() { Ok(Some(r)) } else { Ok(None) }
@@ -295,11 +295,9 @@ impl SocketWrapper {
     #[cfg(target_os = "linux")]
     fn enable_accelerated(&self) -> std::io::Result<()> {
         #[inline]
-        fn op(code: u16, jt: u8, jf: u8, k: u32) -> sock_filter {
-            sock_filter { code, jt, jf, k }
+        fn op(code: u16, jt: u8, jf: u8, k: u32) -> SockFilter {
+            SockFilter::new(code, jt, jf, k)
         }
-
-        use libc::sock_filter;
 
         match self.proto.afi {
             Afi::IPV4 => {

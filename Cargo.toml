@@ -13,9 +13,9 @@ name = "gufo_ping"
 byteorder = "1.5"
 coarsetime = "0.1"
 internet-checksum = "0.2"
-pyo3 = {version = "0.23", features = ["extension-module"]}
+pyo3 = {version = "0.26", features = ["extension-module"]}
 rand = "0.9"
-socket2 = {version = "0.5", features = ["all"]}
+socket2 = {version = "0.6", features = ["all"]}
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
