@@ -115,7 +115,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "License :: OSI Approved :: BSD License",
   "Topic :: Software Development",
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: Libraries :: Python Modules",
@@ -127,7 +126,7 @@ classifiers = [
 description = "Gufo Ping is the accelerated Python asyncio IPv4/IPv6 ping implementation"
 dynamic = ["version"]
 keywords = ["error"]
-license = {text = "BSD 3-Clause License"}
+license = "BSD-3-Clause"
 name = "gufo_ping"
 requires-python = ">=3.9"
 
@@ -136,24 +135,25 @@ build = [
   "setuptools-rust==1.5.2",
 ]
 docs = [
-  "mkdocs-material==9.5.44",
-  "mkdocstrings[python]==0.27.0",
   "mkdocs-gen-files==0.5.0",
-  "mkdocs-literate-nav==0.6.1",
-  "mkdocs-section-index==0.3.9",
+  "mkdocs-literate-nav==0.6.2",
+  "mkdocs-material==9.6.11",
+  "mkdocs-section-index==0.3.10",
+  "mkdocstrings[python]==0.29.1",
 ]
 ipython = [
-  "ipython==9.4.0",
+  "ipython==9.6.0",
 ]
 lint = [
-  "mypy==1.13.0",
-  "ruff==0.11.2",
+  "mypy==1.18.2",
+  "ruff==0.14.0",
   "types-PyYAML==6.0.12.3",
 ]
 test = [
-  "pytest==8.3.3",
-  "coverage[toml]==7.6.4",
   "PyYAML>=6.0",
+  "pytest-benchmark==5.1.0",
+  "pytest-cov==7.0.0",
+  "pytest==8.4.2",
 ]
 
 [project.readme]
