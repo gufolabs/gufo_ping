@@ -41,7 +41,6 @@
             // Add the IDs of extensions you want installed when the container is created.
             "extensions": [
                 "ms-python.python",
-                "ms-python.black-formatter",
                 "ms-vscode.cpptools",
                 "yzhang.markdown-all-in-one",
                 "ms-azuretools.vscode-docker",

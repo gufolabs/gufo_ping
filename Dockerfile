@@ -1,4 +1,4 @@
-FROM python:3.13-slim-bullseye AS dev
+FROM python:3.14-slim-trixie AS dev
 COPY . /workspaces/gufo_ping
 WORKDIR /workspaces/gufo_ping
 ENV \
@@ -9,6 +9,8 @@ ENV \
 RUN \
     set -x \
     && apt-get update \
+    && apt-get -y dist-upgrade \
+    && apt-get -y autoremove\    
     && apt-get install -y --no-install-recommends\
     git\
     ca-certificates\
@@ -19,7 +21,7 @@ RUN \
     && rustup component add\
     rust-analysis\
     rust-src \
-    rls\
+    rust-analyzer\
     clippy\
     rustfmt\
     && pip install --upgrade pip\
