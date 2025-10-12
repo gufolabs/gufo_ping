@@ -1,0 +1,5 @@
+ignore:
+  - benchmarks/
+  - tests/
+  - "**/*.pyi"
+  - "coverage.xml"

@@ -1,36 +1,12 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=61.2", "wheel", "setuptools-rust"]
-
-[tool.black]
-line-length = 79
-target-version = ['py39']
+requires = ["setuptools>=61.2", "wheel", "setuptools-rust>=1.9"]
 
 [tool.coverage.run]
 omit = ["*tests*", "*examples*"]
 
 [tool.coverage.html]
 directory = "dist/coverage"
-
-[tool.cibuildwheel]
-before-test = "pip install -e {project}[test]"
-test-command = "cd {project} && pytest -v tests/"
-
-[tool.cibuildwheel.linux]
-before-all = "./tools/build/setup-rust.sh && pip install -e .[build]"
-manylinux-aarch64-image = "manylinux2014"
-# manylinux-i686-image = "manylinux_2_24"
-# manylinux-ppc64le-image = "manylinux_2_24"
-# manylinux-pypy_aarch64-image = "manylinux_2_24"
-# manylinux-pypy_i686-image = "manylinux_2_24"
-# manylinux-pypy_x86_64-image = "manylinux_2_24"
-# manylinux-s390x-image = "manylinux_2_24"
-manylinux-x86_64-image = "manylinux2014"
-musllinux-aarch64-image = "musllinux_1_1"
-# musllinux-i686-image = "musllinux_1_1"
-# musllinux-ppc64le-image = "musllinux_1_1"
-# musllinux-s390x-image = "musllinux_1_1"
-musllinux-x86_64-image = "musllinux_1_1"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -188,3 +164,10 @@ explicit_package_bases = true
 mypy_path = ["src"]
 strict = true
 warn_unused_ignores = false
+
+[tool.distutils.build_rust]
+inplace = true
+release = true
+
+[[tool.setuptools-rust.ext-modules]]
+target = "gufo.ping._fast"
