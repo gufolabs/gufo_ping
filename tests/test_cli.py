@@ -22,7 +22,7 @@ def test_cli(args: List[str]) -> None:
     assert r == ExitCode.OK
 
 
-@pytest.mark.parametrize("args", [["-s", "10"]])
+@pytest.mark.parametrize("args", [["-s", "10", "127.0.0.1"]])
 def test_cli_error(args: List[str]) -> None:
     with pytest.raises(SystemExit):
         main(args)
