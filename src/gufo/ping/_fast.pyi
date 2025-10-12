@@ -3,11 +3,11 @@
 # This is a stub file for pyo3 module only to satisfy
 # the mkdocstings
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-23, Gufo Labs
+# Copyright (C) 2022-25, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 class SocketWrapper(object):
     def __init__(self: "SocketWrapper", afi: int) -> None: ...
@@ -26,4 +26,3 @@ class SocketWrapper(object):
         self: "SocketWrapper", addr: str, request_id: int, seq: int, size: int
     ) -> None: ...
     def recv(self: "SocketWrapper") -> Optional[Dict[str, int]]: ...
-    def get_expired(self: "SocketWrapper") -> Optional[List[str]]: ...

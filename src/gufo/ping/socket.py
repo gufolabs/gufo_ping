@@ -13,7 +13,8 @@ Attributes:
 """
 
 # Python modules
-from asyncio import Future, get_running_loop, sleep
+from asyncio import Future, TimerHandle, get_running_loop
+from contextlib import suppress
 from typing import Dict, Optional, cast
 
 # Gufo Labs modules
@@ -68,7 +69,6 @@ class PingSocket(object):
         coarse: bool = False,
         accelerated: bool = True,
     ) -> None:
-        self.__force_del = False
         if afi not in self.VALID_AFI:
             msg = f"afi must be {IPv4} or {IPv6}"
             raise ValueError(msg)
@@ -103,34 +103,20 @@ class PingSocket(object):
             self.__sock.set_coarse(True)
         if accelerated:
             self.__sock.set_accelerated(True)
-        self.__timeout = timeout
         self.__sock_fd = self.__sock.get_fd()
         #  <addr>-<request id>-<seq> -> future
         self.__sessions: Dict[str, Future[Optional[float]]] = {}
         # Install response reader
-        self.__force_del = True
         get_running_loop().add_reader(self.__sock_fd, self._on_read)
-        # Install deadline cleaner
-        self.__cleanup_task = get_running_loop().create_task(self._cleanup())
+        self._timeout_handler: Optional[TimerHandle] = None
+        self.__timeout = timeout
 
     def __del__(self: "PingSocket") -> None:
-        """
-        Perform cleanup on delete.
-
-        * Cancel expiration task.
-        * Remove socket reader.
-        """
-        if not self.__force_del:
-            return
-        try:
-            # Unsubscribe reader
-            # get_running_loop() may raise Runtime Error
-            get_running_loop().remove_reader(self.__sock_fd)
-            # Stop cleanup task
-            if self.__cleanup_task is not None:
-                self.__cleanup_task.cancel()
-        except RuntimeError:  # pragma: no cover
-            pass  # Loop is already closed
+        """Perform cleanup on delete."""
+        fd = getattr(self, "__sock_fd", None)
+        if fd:
+            with suppress(RuntimeError):
+                get_running_loop().remove_reader(self.__sock_fd)
 
     def clean_ip(self: "PingSocket", addr: str) -> str:
         """
@@ -164,18 +150,20 @@ class PingSocket(object):
             # Convert IPv6 address to compact form
             addr = self.__sock.clean_ip(addr)
         sid = f"{addr}-{request_id}-{seq}"
-        fut: Future[Optional[float]] = get_running_loop().create_future()
         # Build and send the packet
         try:
             self.__sock.send(addr, request_id, seq, size or self.__size)
         except OSError:
             # Some kernels raise OSError (Network Unreachable)
             # when cannot find the route. Treat them as losses.
-            fut.set_result(None)
-            return await fut
+            return None
         # Install future in the sessions
+        fut: Future[Optional[float]] = get_running_loop().create_future()
         self.__sessions[sid] = fut
-        # Await response or timeout
+        # Trigger timeout handler when necessary
+        if not self._timeout_handler:
+            self._start_timeout_checker()
+        # Await response or timeout. set by _on_read
         return await fut
 
     def _on_read(self: "PingSocket") -> None:
@@ -190,21 +178,17 @@ class PingSocket(object):
             fut = self.__sessions.pop(sid, None)
             if fut:
                 # Pass rtt to the future, unblock await in `ping`
-                fut.set_result(float(rtt) / NS)
+                fut.set_result(float(rtt) / NS if rtt else None)
 
-    async def _cleanup(self: "PingSocket") -> None:
-        """Check for expired sessions and close them."""
-        while True:
-            # Wait for next cycle
-            await sleep(self.__timeout)
-            # Get a list of exired sids
-            expired = self.__sock.get_expired()
-            if not expired:
-                continue
-            # Iterate over expired sids
-            for sid in expired:
-                # Find and pop the future by single call
-                fut = self.__sessions.pop(sid, None)
-                if fut:
-                    # Pass None to indicate the timeout
-                    fut.set_result(None)
+    def _check_timeouts(self) -> None:
+        """Check for pending timeouts."""
+        self._timeout_handler = None
+        self._on_read()
+        if self.__sessions:
+            self._start_timeout_checker()
+
+    def _start_timeout_checker(self) -> None:
+        """Install timeout checker."""
+        self._timeout_handler = get_running_loop().call_later(
+            self.__timeout, self._check_timeouts
+        )

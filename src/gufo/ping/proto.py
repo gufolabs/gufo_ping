@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: SocketProto
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-23, Gufo Labs
+# Copyright (C) 2022-25, Gufo Labs
 # ---------------------------------------------------------------------
 
 """SocketWrapper protocol definition."""
 
 # Python modules
-from typing import Dict, List, Optional, Protocol
+from typing import Dict, Optional, Protocol
 
 
 class SocketProto(Protocol):
@@ -154,17 +154,6 @@ class SocketProto(Protocol):
                 where `session id` is the string of
                 <address>-<request_id>-<seq>,
                 and `rtt` - is the measured round-trip-time in nanoseconds.
-        """
-        ...
-
-    def get_expired(self: "SocketProto") -> Optional[List[str]]:
-        """
-        Get list of sessions with expired timeouts.
-
-        Returns:
-            * `None` - when no sessions expired.
-            * List of expired sessionn ids, where each session id
-                has the format: <address>-<request_id>-<seq>
         """
         ...
 
