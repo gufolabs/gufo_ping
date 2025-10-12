@@ -16,6 +16,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * Python 3.14 support.
 
+### Changed
+
+* Optimized timeouts handling.
+
 ### Infrastructure
 
 * Use python:3.14-slim-trixie for devcontainer.

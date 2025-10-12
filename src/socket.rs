@@ -12,12 +12,15 @@ use pyo3::{
 };
 use rand::Rng;
 use socket2::{Domain, Protocol, SockAddr, SockFilter, Socket, Type};
-use std::collections::{BTreeSet, HashMap};
 use std::convert::TryFrom;
 use std::mem::MaybeUninit;
 use std::net::{SocketAddrV4, SocketAddrV6};
 use std::os::unix::io::AsRawFd;
 use std::time::Instant;
+use std::{
+    collections::{BTreeSet, HashMap},
+    ops::Not,
+};
 
 const MAX_SIZE: usize = 4096;
 const ICMP_SIZE: usize = 8;
@@ -216,6 +219,7 @@ impl SocketWrapper {
     /// Returns dict of <session id> -> rtt
     fn recv(&mut self) -> PyResult<Option<HashMap<String, u64>>> {
         let mut r = HashMap::<String, u64>::new();
+        let ts = self.get_ts();
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
             // Drop too short packets
             if size < self.proto.ip_header_size + ICMP_SIZE {
@@ -227,7 +231,6 @@ impl SocketWrapper {
                 && pkt.is_match(self.proto.icmp_reply_type, self.signature)
             {
                 // Measure RTT
-                let ts = self.get_ts();
                 let pkt_ts = pkt.get_ts();
                 let delay = if ts > pkt_ts {
                     ts - pkt_ts
@@ -244,36 +247,14 @@ impl SocketWrapper {
                     .remove(&Session::new(&pkt.get_sid(paddr), pkt_ts + self.timeout));
             }
         }
-        if !r.is_empty() { Ok(Some(r)) } else { Ok(None) }
-    }
-
-    /// Get list of session ids of expired sessions
-    fn get_expired(&mut self) -> PyResult<Option<Vec<String>>> {
-        let mut r = Vec::<Session>::new();
-        // @todo: Waiting until map_first_last API
-        let ts = self.get_ts();
-        // Extract and cleanup expired sessions
-        // NOTE:
-        // We cannnot remove items while holding the iterator.
-        // Remove them later in separate cycle.
-        // To be replaced with `pop_first` after the `map_first_last`
-        // feeature will be stabilized.
-        for item in self.sessions.iter() {
-            if !item.is_expired(ts) {
-                break;
-            }
-            r.push(item.clone());
+        // Check for expired sessions
+        while let Some(session) = self.sessions.first()
+            && session.is_expired(ts)
+            && let Some(s) = self.sessions.pop_first()
+        {
+            r.insert(s.get_sid(), 0); //Timeout
         }
-        // Cleanup expired sessions sessions
-        for item in r.iter() {
-            self.sessions.remove(item);
-        }
-        //  Return result
-        if r.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(r.iter().map(|x| x.get_sid()).collect()))
-        }
+        Ok(r.is_empty().not().then_some(r))
     }
 }
 
