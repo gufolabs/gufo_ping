@@ -132,6 +132,6 @@ class Cli(object):
         return ExitCode.OK
 
 
-def main() -> int:
+def main(args: Optional[List[str]] = None) -> int:
     """Run `gufo-ping` with command-line arguments."""
-    return Cli().run(sys.argv[1:]).value
+    return Cli().run(sys.argv[1:] if args is None else args).value
