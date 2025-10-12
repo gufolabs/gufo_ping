@@ -17,7 +17,7 @@ import asyncio
 import signal
 import sys
 from enum import IntEnum
-from typing import List, NoReturn, Optional, TypeVar
+from typing import List, NoReturn, Optional
 
 # Gufo Ping modules
 from gufo.ping import Ping
@@ -36,13 +36,6 @@ class ExitCode(IntEnum):
 
     OK = 0
     ERR = 1
-
-
-if sys.version_info < (3, 10):
-
-    def anext(i):
-        """anext() backport."""
-        return i.__anext__()  # type: ignore[attr-defined]
 
 
 class Cli(object):
@@ -113,7 +106,8 @@ class Cli(object):
         while True:
             sent += 1
             try:
-                r = await anext(iter_ping)
+                # Python 3.9 has no anext() function.
+                r = await iter_ping.__anext__()  # type: ignore[attr-defined]
             except (asyncio.CancelledError, StopAsyncIteration):
                 break
             if r is None:
