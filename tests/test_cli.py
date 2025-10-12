@@ -11,7 +11,7 @@ from typing import List
 import pytest
 
 # Gufo Ping modules
-from gufo.ping.cli import ExitCode, main
+from gufo.ping.cli import Cli, ExitCode, main
 
 
 @pytest.mark.parametrize(
@@ -26,3 +26,8 @@ def test_cli(args: List[str]) -> None:
 def test_cli_error(args: List[str]) -> None:
     with pytest.raises(SystemExit):
         main(args)
+
+
+def test_cli_die() -> None:
+    with pytest.raises(SystemExit):
+        Cli.die("die!")

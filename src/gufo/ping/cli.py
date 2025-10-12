@@ -41,7 +41,8 @@ class ExitCode(IntEnum):
 class Cli(object):
     """`gufo-ping` utility class."""
 
-    def die(self, msg: Optional[str] = None) -> NoReturn:
+    @classmethod
+    def die(cls, msg: Optional[str] = None) -> NoReturn:
         """Die with message."""
         if msg:
             print(msg)
