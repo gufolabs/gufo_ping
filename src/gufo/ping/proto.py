@@ -27,7 +27,6 @@ class SocketProto(Protocol):
         Args:
             timeout: Ping timeout, in nanoseconds.
         """
-        ...
 
     def bind(self: "SocketProto", addr: str) -> None:
         """
@@ -44,7 +43,6 @@ class SocketProto(Protocol):
         Args:
             ttl: TTL value.
         """
-        ...
 
     def set_unicast_hops(self: "SocketProto", ttl: int) -> None:
         """
@@ -53,7 +51,6 @@ class SocketProto(Protocol):
         Args:
             ttl: TTL value.
         """
-        ...
 
     def set_tos(self: "SocketProto", tos: int) -> None:
         """
@@ -62,7 +59,6 @@ class SocketProto(Protocol):
         Args:
             tos: ToS value.
         """
-        ...
 
     def set_tclass(self: "SocketProto", tclass: int) -> None:
         """
@@ -71,7 +67,6 @@ class SocketProto(Protocol):
         Args:
             tclass: TCLASS value.
         """
-        ...
 
     def set_coarse(self: "SocketProto", ct: bool) -> None:
         """
@@ -83,7 +78,6 @@ class SocketProto(Protocol):
                 * `CLOCK_MONOTONIC_COARSE` if True
                 * `CLOCK_MONOTONIC` if False
         """
-        ...
 
     def set_send_buffer_size(self: "SocketProto", size: int) -> None:
         """
@@ -95,7 +89,6 @@ class SocketProto(Protocol):
         Args:
             size: Requested send buffer size, in bytes.
         """
-        ...
 
     def set_recv_buffer_size(self: "SocketProto", size: int) -> None:
         """
@@ -107,7 +100,6 @@ class SocketProto(Protocol):
         Args:
             size: Requested recv buffer size, in bytes.
         """
-        ...
 
     def set_accelerated(self: "SocketProto", a: bool) -> None:
         """
@@ -128,7 +120,6 @@ class SocketProto(Protocol):
         Returns:
             file descriptor for open socket.
         """
-        ...
 
     def send(
         self: "SocketProto", addr: str, request_id: int, seq: int, size: int
@@ -142,7 +133,6 @@ class SocketProto(Protocol):
             seq: ICMP sequental number.
             size: Outgoing packet's size in bytes, including IP header.
         """
-        ...
 
     def recv(self: "SocketProto") -> Optional[Dict[str, float]]:
         """
@@ -155,7 +145,6 @@ class SocketProto(Protocol):
                 <address>-<request_id>-<seq>,
                 and `rtt` - is the measured round-trip-time in nanoseconds.
         """
-        ...
 
     def clean_ip(self: "SocketProto", addr: str) -> str:
         """
@@ -167,4 +156,3 @@ class SocketProto(Protocol):
         Returns:
             Normalized address
         """
-        ...
