@@ -126,8 +126,11 @@ jobs:
       - name: Build Rust module
         run: python -m pip install --editable .
 
+      - name: which pytest
+        run: which pytest
+
       - name: Run Tests
-        run: sudo /home/runner/.local/bin/pytest -v --cov --cov-branch --cov-report=xml tests/
+        run: pytest -v --cov --cov-branch --cov-report=xml tests/
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -181,4 +184,4 @@ jobs:
       # WARNING: Cannot open raw socket on GitHub runner,
       # so part of tests will be skipped.
       - name: Run Tests
-        run: sudo pytest -v tests/
+        run: pytest -v tests/
