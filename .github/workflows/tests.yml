@@ -126,11 +126,10 @@ jobs:
       - name: Build Rust module
         run: python -m pip install --editable .
 
-      - name: which pytest
-        run: which pytest
-
       - name: Run Tests
-        run: pytest -v --cov --cov-branch --cov-report=xml tests/
+        run: |
+          PYTEST=$(which pytest)
+          sudo $PYTEST -v --cov --cov-branch --cov-report=xml tests/
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
