@@ -137,6 +137,9 @@ test = [
 content-type = "text/markdown"
 file = "README.md"
 
+[project.scripts]
+gufo-ping = "gufo.ping.cli:main"
+
 [project.urls]
 "Bug Tracker" = "https://github.com/gufolabs/gufo_ping/issues"
 Changelog = "https://github.com/gufolabs/gufo_ping/blob/master/CHANGELOG.md"
