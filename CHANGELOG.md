@@ -10,15 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 To see unreleased changes, please see the [CHANGELOG on the main branch guide](https://github.com/gufolabs/gufo_ping/blob/main/CHANGELOG.md).
 
-## [Unreleased]
+## 0.6.0 - 2025-10-13
 
 ### Added
 
 * Python 3.14 support.
+* `gufo-ping` command-line tool.
 
 ### Changed
 
 * Optimized timeouts handling.
+* Reduced allocations and optimized session storage.
 
 ### Infrastructure
 
