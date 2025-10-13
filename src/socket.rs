@@ -220,6 +220,7 @@ impl SocketWrapper {
     fn recv(&mut self) -> PyResult<Option<HashMap<u64, u64>>> {
         let mut r = HashMap::<u64, u64>::new();
         let ts = self.get_ts();
+        // Rewrite when recvmmsg function will be available.
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
             // Drop too short packets
             if size < self.proto.ip_header_size + ICMP_SIZE {
