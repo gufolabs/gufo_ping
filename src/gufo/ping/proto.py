@@ -123,7 +123,7 @@ class SocketProto(Protocol):
 
     def send(
         self: "SocketProto", addr: str, request_id: int, seq: int, size: int
-    ) -> None:
+    ) -> int:
         """
         Generate and send icmp request packet.
 
@@ -132,17 +132,19 @@ class SocketProto(Protocol):
             request_id: ICMP request id.
             seq: ICMP sequental number.
             size: Outgoing packet's size in bytes, including IP header.
+
+        Returns:
+            session id.
         """
 
-    def recv(self: "SocketProto") -> Optional[Dict[str, float]]:
+    def recv(self: "SocketProto") -> Optional[Dict[int, float]]:
         """
         Receive all awaiting packets.
 
         Returns:
             * `None` - when no packets received.
             * Dict of `session id` -> `rtt`,
-                where `session id` is the string of
-                <address>-<request_id>-<seq>,
+                where `session id` is the value, returned by `send`
                 and `rtt` - is the measured round-trip-time in nanoseconds.
         """
 
