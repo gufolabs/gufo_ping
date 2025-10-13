@@ -115,7 +115,7 @@ jobs:
           CIBW_ARCHS_MACOS: arm64
           CIBW_TEST_REQUIRES: pytest
           CIBW_BEFORE_TEST: "pip install -e {project}[test]"
-          CIBW_TEST_COMMAND: "cd {project} && pytest tests"
+          CIBW_TEST_COMMAND: "cd {project} && sudo $(which pytest) tests"
 
       - name: Save Artefacts
         uses: actions/upload-artifact@v4
