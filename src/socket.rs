@@ -12,15 +12,14 @@ use pyo3::{
 };
 use rand::Rng;
 use socket2::{Domain, Protocol, SockAddr, SockFilter, Socket, Type};
-use std::convert::TryFrom;
-use std::mem::MaybeUninit;
-use std::net::SocketAddr;
-use std::net::{SocketAddrV4, SocketAddrV6};
-use std::os::unix::io::AsRawFd;
-use std::time::Instant;
 use std::{
     collections::{BTreeSet, HashMap},
+    convert::TryFrom,
+    mem::MaybeUninit,
+    net::{SocketAddr, SocketAddrV4, SocketAddrV6},
     ops::Not,
+    os::unix::io::AsRawFd,
+    time::Instant,
 };
 use twox_hash::XxHash64;
 
@@ -349,3 +348,16 @@ impl SocketWrapper {
         unsafe { &*(slice as *const [MaybeUninit<u8>] as *const [u8]) }
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test_ipv4_sid() {
+//         let sock = SocketWrapper::new(4).unwrap();
+//         let addr = SocketAddrV4::new("127.0.0.1".parse().unwrap(), 0);
+//         let sid = sock.get_sid(&addr.into(), 0x102, 1);
+//         assert_eq!(sid, 1);
+//     }
+// }

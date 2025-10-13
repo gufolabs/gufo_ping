@@ -195,21 +195,14 @@ mod tests {
     }
 
     #[test]
-    fn test_icmpv4_req_get_sid() {
-        let sid = ICMPV4_REQ_PKT.get_sid("127.0.0.1".into());
-        assert_eq!(sid, "127.0.0.1-258-1")
+    fn test_icmpv4_req_get_request_id() {
+        let request_id = ICMPV4_REPLY_PKT.get_request_id();
+        assert_eq!(request_id, 0x0102);
     }
 
     #[test]
-    fn test_icmpv4_reply_get_sid() {
-        let sid = ICMPV4_REPLY_PKT.get_sid("127.0.0.1".into());
-        assert_eq!(sid, "127.0.0.1-258-1")
-    }
-
-    #[test]
-    fn test_icmpv4_equal_sid() {
-        let sid1 = ICMPV4_REQ_PKT.get_sid("127.0.0.1".into());
-        let sid2 = ICMPV4_REPLY_PKT.get_sid("127.0.0.1".into());
-        assert_eq!(sid1, sid2)
+    fn test_icmpv4_req_get_seq() {
+        let seq = ICMPV4_REPLY_PKT.get_seq();
+        assert_eq!(seq, 1);
     }
 }
