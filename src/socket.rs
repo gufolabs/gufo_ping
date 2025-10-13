@@ -11,7 +11,9 @@ use pyo3::{
     prelude::*,
 };
 use rand::Rng;
-use socket2::{Domain, Protocol, SockAddr, SockFilter, Socket, Type};
+#[cfg(target_os = "linux")]
+use socket2::SockFilter;
+use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::{
     collections::{BTreeSet, HashMap},
     convert::TryFrom,
