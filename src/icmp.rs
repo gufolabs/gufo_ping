@@ -63,8 +63,14 @@ impl IcmpPacket {
         }
     }
 
-    pub fn get_sid(&self, addr: String) -> String {
-        format!("{}-{}-{}", addr, self.request_id, self.seq)
+    #[inline]
+    pub fn get_request_id(&self) -> u16 {
+        self.request_id
+    }
+
+    #[inline]
+    pub fn get_seq(&self) -> u16 {
+        self.seq
     }
 
     pub fn get_ts(&self) -> u64 {

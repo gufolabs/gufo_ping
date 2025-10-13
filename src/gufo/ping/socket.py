@@ -105,7 +105,7 @@ class PingSocket(object):
             self.__sock.set_accelerated(True)
         self.__sock_fd = self.__sock.get_fd()
         #  <addr>-<request id>-<seq> -> future
-        self.__sessions: Dict[str, Future[Optional[float]]] = {}
+        self.__sessions: Dict[int, Future[Optional[float]]] = {}
         # Install response reader
         get_running_loop().add_reader(self.__sock_fd, self._on_read)
         self._timeout_handler: Optional[TimerHandle] = None
@@ -149,10 +149,9 @@ class PingSocket(object):
         if ":" in addr:
             # Convert IPv6 address to compact form
             addr = self.__sock.clean_ip(addr)
-        sid = f"{addr}-{request_id}-{seq}"
         # Build and send the packet
         try:
-            self.__sock.send(addr, request_id, seq, size or self.__size)
+            sid = self.__sock.send(addr, request_id, seq, size or self.__size)
         except OSError:
             # Some kernels raise OSError (Network Unreachable)
             # when cannot find the route. Treat them as losses.

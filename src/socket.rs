@@ -14,6 +14,7 @@ use rand::Rng;
 use socket2::{Domain, Protocol, SockAddr, SockFilter, Socket, Type};
 use std::convert::TryFrom;
 use std::mem::MaybeUninit;
+use std::net::SocketAddr;
 use std::net::{SocketAddrV4, SocketAddrV6};
 use std::os::unix::io::AsRawFd;
 use std::time::Instant;
@@ -21,6 +22,7 @@ use std::{
     collections::{BTreeSet, HashMap},
     ops::Not,
 };
+use twox_hash::XxHash64;
 
 const MAX_SIZE: usize = 4096;
 const ICMP_SIZE: usize = 8;
@@ -187,9 +189,8 @@ impl SocketWrapper {
             Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).ip().to_string(),
         })
     }
-
     /// Send single ICMP echo request
-    fn send(&mut self, addr: String, request_id: u16, seq: u16, size: usize) -> PyResult<()> {
+    fn send(&mut self, addr: String, request_id: u16, seq: u16, size: usize) -> PyResult<u64> {
         // Parse IP address
         let to_addr: SockAddr = match self.proto.afi {
             Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
@@ -210,15 +211,15 @@ impl SocketWrapper {
         self.io
             .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
-        self.sessions
-            .insert(Session::new(&pkt.get_sid(addr), ts + self.timeout));
-        Ok(())
+        let sid = self.get_sid(&to_addr, request_id, seq);
+        self.sessions.insert(Session::new(sid, ts + self.timeout));
+        Ok(sid)
     }
 
     /// Receive all pending icmp echo replies.
     /// Returns dict of <session id> -> rtt
-    fn recv(&mut self) -> PyResult<Option<HashMap<String, u64>>> {
-        let mut r = HashMap::<String, u64>::new();
+    fn recv(&mut self) -> PyResult<Option<HashMap<u64, u64>>> {
+        let mut r = HashMap::<u64, u64>::new();
         let ts = self.get_ts();
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
             // Drop too short packets
@@ -237,14 +238,10 @@ impl SocketWrapper {
                 } else {
                     1 // Minimal delay
                 };
-                // Convert SockAddr to printable form
-                let paddr = match self.proto.afi {
-                    Afi::IPV4 => addr.as_socket_ipv4().unwrap().ip().to_string(),
-                    Afi::IPV6 => addr.as_socket_ipv6().unwrap().ip().to_string(),
-                };
-                r.insert(pkt.get_sid(paddr.clone()), delay);
+                let sid = self.get_sid(&addr, pkt.get_request_id(), pkt.get_seq());
+                r.insert(sid, delay);
                 self.sessions
-                    .remove(&Session::new(&pkt.get_sid(paddr), pkt_ts + self.timeout));
+                    .remove(&Session::new(sid, pkt_ts + self.timeout));
             }
         }
         // Check for expired sessions
@@ -272,6 +269,21 @@ impl SocketWrapper {
         }
     }
 
+    /// Generate session id
+    fn get_sid(&self, addr: &SockAddr, request_id: u16, seq: u16) -> u64 {
+        match addr.as_socket() {
+            Some(a) => match a {
+                SocketAddr::V4(x) => {
+                    ((request_id as u64) << 48) | ((seq as u64) << 32) | (x.ip().to_bits() as u64)
+                }
+                SocketAddr::V6(x) => XxHash64::oneshot(
+                    ((request_id as u64) << 16) | (seq as u64),
+                    x.ip().octets().as_slice(),
+                ),
+            },
+            None => 0,
+        }
+    }
     /// Attach cBPF filter to socket to reduce context switches
     #[cfg(target_os = "linux")]
     fn enable_accelerated(&self) -> std::io::Result<()> {

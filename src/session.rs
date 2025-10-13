@@ -12,17 +12,14 @@ use std::cmp::Ordering;
 /// according to Socket::get_ts()
 #[derive(PartialEq, Eq, Clone)]
 pub(crate) struct Session {
-    sid: String,
+    sid: u64,
     deadline: u64,
 }
 
 impl Session {
     /// Create new session
-    pub fn new(sid: &str, deadline: u64) -> Self {
-        Session {
-            sid: sid.to_string(),
-            deadline,
-        }
+    pub fn new(sid: u64, deadline: u64) -> Self {
+        Session { sid, deadline }
     }
 
     /// Check if session is expired
@@ -31,8 +28,8 @@ impl Session {
     }
 
     /// Get owned instance of sid
-    pub fn get_sid(&self) -> String {
-        self.sid.clone()
+    pub fn get_sid(&self) -> u64 {
+        self.sid
     }
 }
 
