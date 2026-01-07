@@ -93,7 +93,6 @@ classifiers = [
   "Intended Audience :: System Administrators",
   "Intended Audience :: Telecommunications Industry",
   "Programming Language :: Rust",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -112,7 +111,7 @@ dynamic = ["version"]
 keywords = ["error"]
 license = "BSD-3-Clause"
 name = "gufo_ping"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 build = [

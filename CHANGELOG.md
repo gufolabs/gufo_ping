@@ -14,6 +14,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Removed
 
+* Python 3.9 support.
 * `accelerated` option. Now always enabled when possible.
 
 ### Infrastructure

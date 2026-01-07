@@ -14,6 +14,7 @@ Attributes:
 # Python modules
 import argparse
 import asyncio
+import contextlib
 import signal
 import sys
 from enum import IntEnum
@@ -103,25 +104,20 @@ class Cli(object):
         sent = 0
         received = 0
         print(f"PING {address}: {size} bytes")
-        iter_ping = ping.iter_rtt(addr=address)
-        while True:
-            sent += 1
-            try:
-                # Python 3.9 has no anext() function.
-                r = await iter_ping.__anext__()  # type: ignore[attr-defined]
-            except (asyncio.CancelledError, StopAsyncIteration):
-                break
-            if r is None:
-                print(f"Request timeout for icmp_seq {n}")
-            else:
-                print(
-                    f"{size} bytes from {address}: "
-                    f"icmp_seq={n} time={r * 1000.0:.3f}ms"
-                )
-                received += 1
-            n += 1
-            if count is not None and n >= count:
-                break
+        with contextlib.suppress(asyncio.CancelledError):
+            async for r in ping.iter_rtt(addr=address):
+                sent += 1
+                if r is None:
+                    print(f"Request timeout for icmp_seq {n}")
+                else:
+                    print(
+                        f"{size} bytes from {address}: "
+                        f"icmp_seq={n} time={r * 1000.0:.3f}ms"
+                    )
+                    received += 1
+                n += 1
+                if count is not None and n >= count:
+                    break
         print(f"--- {address} ping statistics ---")
         loss = float(sent - received) / float(sent) * 100.0
         print(
@@ -129,7 +125,6 @@ class Cli(object):
             f"{received} packets received, "
             f"{loss:.1f}% packet loss"
         )
-        await iter_ping.aclose()  # type: ignore[attr-defined]
         return ExitCode.OK
 
 
