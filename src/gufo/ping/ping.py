@@ -84,7 +84,7 @@ class Ping(object):
     request_id = itertools.count(random.randint(0, 0xFFFF))
 
     def __init__(
-        self: "Ping",
+        self,
         size: int = 64,
         src_addr: Union[None, str, Iterable[str]] = None,
         ttl: Optional[int] = None,
@@ -149,7 +149,7 @@ class Ping(object):
                 r[afi] = a
         return r
 
-    def __get_socket(self: "Ping", address: str) -> PingSocket:
+    def __get_socket(self, address: str) -> PingSocket:
         """
         Get PingSocket instace.
 
@@ -179,7 +179,7 @@ class Ping(object):
             self.__sockets[afi] = sock
         return sock
 
-    def __get_request_id(self: "Ping") -> Tuple[int, int]:
+    def __get_request_id(self) -> Tuple[int, int]:
         """
         Get request id.
 
@@ -194,7 +194,7 @@ class Ping(object):
         return request_id, seq
 
     async def ping(
-        self: "Ping",
+        self,
         addr: str,
         size: Optional[int] = None,
     ) -> Optional[float]:
@@ -218,7 +218,7 @@ class Ping(object):
         return await sock.ping(addr, size=size, request_id=request_id, seq=seq)
 
     async def iter_rtt(
-        self: "Ping",
+        self,
         addr: str,
         *,
         size: Optional[int] = None,

@@ -55,7 +55,7 @@ class PingSocket(object):
     VALID_AFI = (IPv4, IPv6)
 
     def __init__(
-        self: "PingSocket",
+        self,
         afi: int = IPv4,
         size: int = 64,
         src_addr: Optional[str] = None,
@@ -106,14 +106,14 @@ class PingSocket(object):
         self._timeout_handler: Optional[TimerHandle] = None
         self.__timeout = timeout
 
-    def __del__(self: "PingSocket") -> None:
+    def __del__(self) -> None:
         """Perform cleanup on delete."""
         fd = getattr(self, "__sock_fd", None)
         if fd:
             with suppress(RuntimeError):
                 get_running_loop().remove_reader(self.__sock_fd)
 
-    def clean_ip(self: "PingSocket", addr: str) -> str:
+    def clean_ip(self, addr: str) -> str:
         """
         Normalize IP address to a stable form.
 
@@ -126,7 +126,7 @@ class PingSocket(object):
         return self.__sock.clean_ip(addr)
 
     async def ping(
-        self: "PingSocket",
+        self,
         addr: str,
         size: Optional[int] = None,
         request_id: int = 0,
@@ -160,7 +160,7 @@ class PingSocket(object):
         # Await response or timeout. set by _on_read
         return await fut
 
-    def _on_read(self: "PingSocket") -> None:
+    def _on_read(self) -> None:
         """Handle socket read event."""
         # Get bulk read info from Rust side
         seen = self.__sock.recv()

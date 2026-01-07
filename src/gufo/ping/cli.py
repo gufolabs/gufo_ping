@@ -48,7 +48,7 @@ class Cli(object):
             print(msg)
         sys.exit(1)
 
-    def run(self: "Cli", args: List[str]) -> ExitCode:
+    def run(self, args: List[str]) -> ExitCode:
         """
         Parse command-line arguments and run appropriate command.
 

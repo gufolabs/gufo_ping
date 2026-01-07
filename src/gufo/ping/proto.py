@@ -18,9 +18,9 @@ class SocketProto(Protocol):
     implementing low-level details of the PingSocket.
     """
 
-    def __init__(self: "SocketProto", afi: int) -> None: ...
+    def __init__(self, afi: int) -> None: ...
 
-    def set_timeout(self: "SocketProto", timeout: int) -> None:
+    def set_timeout(self, timeout: int) -> None:
         """
         Set default ping timeout.
 
@@ -28,7 +28,7 @@ class SocketProto(Protocol):
             timeout: Ping timeout, in nanoseconds.
         """
 
-    def bind(self: "SocketProto", addr: str) -> None:
+    def bind(self, addr: str) -> None:
         """
         Bind to source address.
 
@@ -36,7 +36,7 @@ class SocketProto(Protocol):
             addr: Source Address
         """
 
-    def set_ttl(self: "SocketProto", ttl: int) -> None:
+    def set_ttl(self, ttl: int) -> None:
         """
         Change outgoing packets' time-to-live field.
 
@@ -44,7 +44,7 @@ class SocketProto(Protocol):
             ttl: TTL value.
         """
 
-    def set_unicast_hops(self: "SocketProto", ttl: int) -> None:
+    def set_unicast_hops(self, ttl: int) -> None:
         """
         Change outgoing packets' unicast hops (IPv6 TTL).
 
@@ -52,7 +52,7 @@ class SocketProto(Protocol):
             ttl: TTL value.
         """
 
-    def set_tos(self: "SocketProto", tos: int) -> None:
+    def set_tos(self, tos: int) -> None:
         """
         Change outgoing packets' ToS/DSCP field.
 
@@ -60,7 +60,7 @@ class SocketProto(Protocol):
             tos: ToS value.
         """
 
-    def set_tclass(self: "SocketProto", tclass: int) -> None:
+    def set_tclass(self, tclass: int) -> None:
         """
         Change outgoing packets' IPv6 TCLASS field.
 
@@ -68,7 +68,7 @@ class SocketProto(Protocol):
             tclass: TCLASS value.
         """
 
-    def set_coarse(self: "SocketProto", ct: bool) -> None:
+    def set_coarse(self, ct: bool) -> None:
         """
         Switch between the internal timer implemenetation.
 
@@ -79,7 +79,7 @@ class SocketProto(Protocol):
                 * `CLOCK_MONOTONIC` if False
         """
 
-    def set_send_buffer_size(self: "SocketProto", size: int) -> None:
+    def set_send_buffer_size(self, size: int) -> None:
         """
         Set outgoing socket's buffer size.
 
@@ -90,7 +90,7 @@ class SocketProto(Protocol):
             size: Requested send buffer size, in bytes.
         """
 
-    def set_recv_buffer_size(self: "SocketProto", size: int) -> None:
+    def set_recv_buffer_size(self, size: int) -> None:
         """
         Set incoming socket's buffer size.
 
@@ -102,7 +102,7 @@ class SocketProto(Protocol):
         """
 
     def get_fd(
-        self: "SocketProto",
+        self,
     ) -> int:  # @todo: Shold be FileDescriptorLike
         """
         Get socket's file descriptor.
@@ -111,9 +111,7 @@ class SocketProto(Protocol):
             file descriptor for open socket.
         """
 
-    def send(
-        self: "SocketProto", addr: str, request_id: int, seq: int, size: int
-    ) -> int:
+    def send(self, addr: str, request_id: int, seq: int, size: int) -> int:
         """
         Generate and send icmp request packet.
 
@@ -127,7 +125,7 @@ class SocketProto(Protocol):
             session id.
         """
 
-    def recv(self: "SocketProto") -> Optional[Dict[int, float]]:
+    def recv(self) -> Optional[Dict[int, float]]:
         """
         Receive all awaiting packets.
 
@@ -138,7 +136,7 @@ class SocketProto(Protocol):
                 and `rtt` - is the measured round-trip-time in nanoseconds.
         """
 
-    def clean_ip(self: "SocketProto", addr: str) -> str:
+    def clean_ip(self, addr: str) -> str:
         """
         Normalize IP address to a stable form.
 

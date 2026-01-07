@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 class Caps(object):
     @cached_property
-    def has_ipv4(self: "Caps") -> bool:
+    def has_ipv4(self) -> bool:
         """
         Check system allows IPv4 raw sockets.
 
@@ -30,7 +30,7 @@ class Caps(object):
             return False
 
     @cached_property
-    def has_ipv6(self: "Caps") -> bool:
+    def has_ipv6(self) -> bool:
         """
         Check system allows IPv6 raw sockets.
 
@@ -48,12 +48,12 @@ class Caps(object):
             return False
 
     @cached_property
-    def is_denied(self: "Caps") -> bool:
+    def is_denied(self) -> bool:
         """Check if all raw sockets are denied."""
         return not (self.has_ipv4 or self.has_ipv6)
 
     @cached_property
-    def loopbacks(self: "Caps") -> List[str]:
+    def loopbacks(self) -> List[str]:
         """
         Get list of loopback addresses.
 

@@ -1,5 +1,7 @@
-# Generate reference pages
+"""Generate reference pages."""
+
 from pathlib import Path
+
 import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
@@ -15,7 +17,7 @@ for path in sorted(Path("src").rglob("*.py")):
         full_doc_path = full_doc_path.with_name("index.md")
     elif parts[-1] == "__main__":
         continue
-    nav[("gufo.ping",) + parts[2:]] = str(doc_path)
+    nav[("gufo.ping", *parts[2:])] = str(doc_path)
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
         identifier = ".".join(parts)
         print(f"# {identifier}\n\n::: {identifier}", file=fd)
