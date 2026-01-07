@@ -78,8 +78,9 @@ class PingSocket(object):
             raise ValueError(msg)
         self.__size = size
         # Create and initialize wrapped socket
-        self.__sock: SocketProto = cast(SocketProto, SocketWrapper(afi))
-        self.__sock.set_timeout(int(timeout * NS))
+        self.__sock: SocketProto = cast(
+            SocketProto, SocketWrapper(afi, int(timeout * NS), coarse)
+        )
         if src_addr:
             self.__sock.bind(src_addr)
         if ttl is not None:
@@ -96,8 +97,6 @@ class PingSocket(object):
             self.__sock.set_send_buffer_size(send_buffer_size)
         if recv_buffer_size is not None:
             self.__sock.set_recv_buffer_size(recv_buffer_size)
-        if coarse:
-            self.__sock.set_coarse(True)
         self.__sock_fd = self.__sock.get_fd()
         #  <addr>-<request id>-<seq> -> future
         self.__sessions: Dict[int, Future[Optional[float]]] = {}

@@ -86,7 +86,7 @@ pub(crate) struct SocketWrapper {
 impl SocketWrapper {
     /// Python constructor
     #[new]
-    fn new(afi: u8) -> PyResult<Self> {
+    fn new(afi: u8, timeout_ns: u64, coarse: bool) -> PyResult<Self> {
         let proto = match afi {
             4 => &IPV4,
             6 => &IPV6,
@@ -106,9 +106,9 @@ impl SocketWrapper {
             io,
             signature,
             sessions: SessionManager::new(),
-            timeout: 1_000_000_000,
+            timeout: timeout_ns,
             start: Instant::now(),
-            coarse: false,
+            coarse,
             buf: unsafe { MaybeUninit::uninit().assume_init() },
         })
     }
@@ -121,12 +121,6 @@ impl SocketWrapper {
         self.io.bind(&src_addr)?;
         Ok(())
     }
-    /// Set default timeout, in nanoseconds
-    fn set_timeout(&mut self, timeout: u64) -> PyResult<()> {
-        self.timeout = timeout;
-        Ok(())
-    }
-
     /// Set default outgoing packets' TTL
     fn set_ttl(&self, ttl: u32) -> PyResult<()> {
         self.io.set_ttl_v4(ttl)?;
@@ -171,12 +165,6 @@ impl SocketWrapper {
             effective_size >>= 1;
         }
         Err(PyOSError::new_err("unable to set buffer size"))
-    }
-
-    /// Switch to CLOCK_MONOTONIC_COARSE implementation
-    fn set_coarse(&mut self, ct: bool) -> PyResult<()> {
-        self.coarse = ct;
-        Ok(())
     }
 
     /// Get socket's file descriptor

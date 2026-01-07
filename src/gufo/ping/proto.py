@@ -18,15 +18,7 @@ class SocketProto(Protocol):
     implementing low-level details of the PingSocket.
     """
 
-    def __init__(self, afi: int) -> None: ...
-
-    def set_timeout(self, timeout: int) -> None:
-        """
-        Set default ping timeout.
-
-        Args:
-            timeout: Ping timeout, in nanoseconds.
-        """
+    def __init__(self, afi: int, timeout_ns: int, coarse: bool) -> None: ...
 
     def bind(self, addr: str) -> None:
         """
@@ -66,17 +58,6 @@ class SocketProto(Protocol):
 
         Args:
             tclass: TCLASS value.
-        """
-
-    def set_coarse(self, ct: bool) -> None:
-        """
-        Switch between the internal timer implemenetation.
-
-        Args:
-            ct: Use
-
-                * `CLOCK_MONOTONIC_COARSE` if True
-                * `CLOCK_MONOTONIC` if False
         """
 
     def set_send_buffer_size(self, size: int) -> None:
