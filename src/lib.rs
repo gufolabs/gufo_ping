@@ -1,10 +1,11 @@
 // ---------------------------------------------------------------------
 // Gufo Ping: Module definition
 // ---------------------------------------------------------------------
-// Copyright (C) 2022-25, Gufo Labs
+// Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
 use pyo3::prelude::*;
+pub(crate) mod filter;
 pub(crate) mod session;
 pub(crate) use session::Session;
 pub(crate) mod icmp;

@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Ping implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 """Ping client implementation."""
@@ -51,8 +51,6 @@ class Ping(object):
             Use OS defaults when empty.
         coarse: Use CLOCK_MONOTONIC_COARSE when set,
             fall back to CLOCK_MONOTONIC otherwise.
-        accelerated: Enable platform-dependend accelerated
-            socket processing.
 
     Note:
         Opening the Raw Socket may require super-user priveleges
@@ -95,7 +93,6 @@ class Ping(object):
         send_buffer_size: Optional[int] = None,
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
-        accelerated: bool = True,
     ) -> None:
         self.__size = size
         self.__src_addr = self._get_src_addr(src_addr)
@@ -105,7 +102,6 @@ class Ping(object):
         self.__send_buffer_size = send_buffer_size
         self.__recv_buffer_size = recv_buffer_size
         self.__coarse = coarse
-        self.__accelerated = accelerated
         self.__sockets: Dict[int, PingSocket] = {}
 
     @staticmethod
@@ -179,7 +175,6 @@ class Ping(object):
                 send_buffer_size=self.__send_buffer_size,
                 recv_buffer_size=self.__recv_buffer_size,
                 coarse=self.__coarse,
-                accelerated=self.__accelerated,
             )
             self.__sockets[afi] = sock
         return sock

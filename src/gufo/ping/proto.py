@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: SocketProto
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 """SocketWrapper protocol definition."""
@@ -99,16 +99,6 @@ class SocketProto(Protocol):
 
         Args:
             size: Requested recv buffer size, in bytes.
-        """
-
-    def set_accelerated(self: "SocketProto", a: bool) -> None:
-        """
-        Enable platform-dependend raw socket processing.
-
-        Args:
-            a: Enable or disable an acceleration.
-                * True - enable, when platform supports acceleration.
-                * False - disable the acceleration.
         """
 
     def get_fd(

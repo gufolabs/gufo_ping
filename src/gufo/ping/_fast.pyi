@@ -3,7 +3,7 @@
 # This is a stub file for pyo3 module only to satisfy
 # the mkdocstings
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules
@@ -20,7 +20,6 @@ class SocketWrapper(object):
     def set_send_buffer_size(self: "SocketWrapper", size: int) -> None: ...
     def set_recv_buffer_size(self: "SocketWrapper", size: int) -> None: ...
     def set_coarse(self: "SocketWrapper", coarse: bool) -> None: ...
-    def set_accelerated(self: "SocketWrapper", acc: bool) -> None: ...
     def get_fd(self: "SocketWrapper") -> int: ...
     def send(
         self: "SocketWrapper", addr: str, request_id: int, seq: int, size: int

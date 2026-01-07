@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: PingSocket implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 """
@@ -50,8 +50,6 @@ class PingSocket(object):
             Use OS defaults when empty.
         coarse: Use CLOCK_MONOTONIC_COARSE when set,
             fall back to CLOCK_MONOTONIC otherwise.
-        accelerated: Enable platform-dependend accelerated
-            socket processing.
     """
 
     VALID_AFI = (IPv4, IPv6)
@@ -67,7 +65,6 @@ class PingSocket(object):
         send_buffer_size: Optional[int] = None,
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
-        accelerated: bool = True,
     ) -> None:
         if afi not in self.VALID_AFI:
             msg = f"afi must be {IPv4} or {IPv6}"
@@ -101,8 +98,6 @@ class PingSocket(object):
             self.__sock.set_recv_buffer_size(recv_buffer_size)
         if coarse:
             self.__sock.set_coarse(True)
-        if accelerated:
-            self.__sock.set_accelerated(True)
         self.__sock_fd = self.__sock.get_fd()
         #  <addr>-<request id>-<seq> -> future
         self.__sessions: Dict[int, Future[Optional[float]]] = {}

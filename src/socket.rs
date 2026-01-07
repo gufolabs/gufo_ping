@@ -1,18 +1,16 @@
 // ---------------------------------------------------------------------
 // Gufo Ping: SocketWrapper implementation
 // ---------------------------------------------------------------------
-// Copyright (C) 2022-25, Gufo Labs
+// Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
-use super::{IcmpPacket, Session};
+use crate::{IcmpPacket, Session, filter::Filter};
 use coarsetime::Clock;
 use pyo3::{
     exceptions::{PyOSError, PyValueError},
     prelude::*,
 };
 use rand::Rng;
-#[cfg(target_os = "linux")]
-use socket2::SockFilter;
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::{
     collections::{BTreeSet, HashMap},
@@ -28,6 +26,7 @@ use twox_hash::XxHash64;
 const MAX_SIZE: usize = 4096;
 const ICMP_SIZE: usize = 8;
 
+// @todo: Is necessary?
 enum Afi {
     IPV4,
     IPV6,
@@ -37,6 +36,7 @@ struct Proto {
     afi: Afi,
     domain: Domain,
     protocol: Protocol,
+    filter: Filter,
     ip_header_size: usize,
     icmp_request_type: u8,
     icmp_reply_type: u8,
@@ -46,6 +46,10 @@ static IPV4: Proto = Proto {
     afi: Afi::IPV4,
     domain: Domain::IPV4,
     protocol: Protocol::ICMPV4,
+    #[cfg(target_os = "linux")]
+    filter: Filter::LinuxRaw4,
+    #[cfg(not(target_os = "linux"))]
+    filter: Filter::None,
     ip_header_size: 20,
     icmp_request_type: 8,
     icmp_reply_type: 0,
@@ -55,6 +59,10 @@ static IPV6: Proto = Proto {
     afi: Afi::IPV6,
     domain: Domain::IPV6,
     protocol: Protocol::ICMPV6,
+    #[cfg(target_os = "linux")]
+    filter: Filter::LinuxRaw6,
+    #[cfg(not(target_os = "linux"))]
+    filter: Filter::None,
     ip_header_size: 0, // No IPv6 header is passed over socket
     icmp_request_type: 128,
     icmp_reply_type: 129,
@@ -83,17 +91,19 @@ impl SocketWrapper {
             6 => &IPV6,
             _ => return Err(PyValueError::new_err("invalid afi".to_string())),
         };
+        // Generate socket signature
+        let signature = rand::rng().random();
         // Create socket for given address family
         let io = Socket::new(proto.domain, Type::RAW, Some(proto.protocol))
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
+        proto.filter.attach_filter(&io, signature)?;
         // Mark socket as non-blocking
         io.set_nonblocking(true)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
-        let mut rng = rand::rng();
         Ok(Self {
             proto,
             io,
-            signature: rng.random(),
+            signature,
             sessions: BTreeSet::new(),
             timeout: 1_000_000_000,
             start: Instant::now(),
@@ -165,16 +175,6 @@ impl SocketWrapper {
     /// Switch to CLOCK_MONOTONIC_COARSE implementation
     fn set_coarse(&mut self, ct: bool) -> PyResult<()> {
         self.coarse = ct;
-        Ok(())
-    }
-
-    /// Enable accelerated socket processing
-    fn set_accelerated(&self, a: bool) -> PyResult<()> {
-        if a {
-            self.enable_accelerated()?
-        } else {
-            self.disable_accelerated()?
-        }
         Ok(())
     }
 
@@ -286,62 +286,7 @@ impl SocketWrapper {
             None => 0,
         }
     }
-    /// Attach cBPF filter to socket to reduce context switches
-    #[cfg(target_os = "linux")]
-    fn enable_accelerated(&self) -> std::io::Result<()> {
-        #[inline]
-        fn op(code: u16, jt: u8, jf: u8, k: u32) -> SockFilter {
-            SockFilter::new(code, jt, jf, k)
-        }
 
-        match self.proto.afi {
-            Afi::IPV4 => {
-                let filters = [
-                    op(0x30, 0, 0, 0x00000014),                           // ldb [20]
-                    op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x0, drop
-                    op(0x20, 0, 0, 0x0000001c),                           // ld [28]
-                    op(0x15, 0, 3, (self.signature >> 32) as u32),        // jne #sig1, drop
-                    op(0x20, 0, 0, 0x00000020),                           // ld [32]
-                    op(0x15, 0, 1, (self.signature & 0xFFFFFFFF) as u32), // jne #sig2, drop
-                    op(0x06, 0, 0, 0xffffffff),                           // ret #-1
-                    op(0x06, 0, 0, 0000000000),                           // drop: ret #0
-                ];
-                self.io.attach_filter(&filters)?;
-            }
-            Afi::IPV6 => {
-                let filters = [
-                    op(0x30, 0, 0, 0x00000000),                           // ldb [0]
-                    op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x81, drop
-                    op(0x20, 0, 0, 0x00000008),                           // ld [8]
-                    op(0x15, 0, 3, (self.signature >> 32) as u32),        // jne #sig1, drop
-                    op(0x20, 0, 0, 0x0000000c),                           // ld [12]
-                    op(0x15, 0, 1, (self.signature & 0xFFFFFFFF) as u32), // jne #sig2, drop
-                    op(0x06, 0, 0, 0xffffffff),                           // ret #-1
-                    op(0x06, 0, 0, 0000000000),                           // drop: ret #0
-                ];
-
-                self.io.attach_filter(&filters)?;
-            }
-        }
-        Ok(())
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn enable_accelerated(&self) -> std::io::Result<()> {
-        Ok(())
-    }
-
-    /// Remove BPF filter from socket
-    #[cfg(target_os = "linux")]
-    fn disable_accelerated(&self) -> std::io::Result<()> {
-        self.io.detach_filter()?;
-        Ok(())
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn disable_accelerated(&self) -> std::io::Result<()> {
-        Ok(())
-    }
     // Assume buffer initialized
     // @todo: Replace with BufRead.filled()
     // @todo: Replace when `maybe_uninit_slice` feature
