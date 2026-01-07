@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: PingSocket implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 """
@@ -50,14 +50,12 @@ class PingSocket(object):
             Use OS defaults when empty.
         coarse: Use CLOCK_MONOTONIC_COARSE when set,
             fall back to CLOCK_MONOTONIC otherwise.
-        accelerated: Enable platform-dependend accelerated
-            socket processing.
     """
 
     VALID_AFI = (IPv4, IPv6)
 
     def __init__(
-        self: "PingSocket",
+        self,
         afi: int = IPv4,
         size: int = 64,
         src_addr: Optional[str] = None,
@@ -67,7 +65,6 @@ class PingSocket(object):
         send_buffer_size: Optional[int] = None,
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
-        accelerated: bool = True,
     ) -> None:
         if afi not in self.VALID_AFI:
             msg = f"afi must be {IPv4} or {IPv6}"
@@ -81,8 +78,9 @@ class PingSocket(object):
             raise ValueError(msg)
         self.__size = size
         # Create and initialize wrapped socket
-        self.__sock: SocketProto = cast(SocketProto, SocketWrapper(afi))
-        self.__sock.set_timeout(int(timeout * NS))
+        self.__sock: SocketProto = cast(
+            SocketProto, SocketWrapper(afi, int(timeout * NS), coarse)
+        )
         if src_addr:
             self.__sock.bind(src_addr)
         if ttl is not None:
@@ -99,10 +97,6 @@ class PingSocket(object):
             self.__sock.set_send_buffer_size(send_buffer_size)
         if recv_buffer_size is not None:
             self.__sock.set_recv_buffer_size(recv_buffer_size)
-        if coarse:
-            self.__sock.set_coarse(True)
-        if accelerated:
-            self.__sock.set_accelerated(True)
         self.__sock_fd = self.__sock.get_fd()
         #  <addr>-<request id>-<seq> -> future
         self.__sessions: Dict[int, Future[Optional[float]]] = {}
@@ -111,14 +105,14 @@ class PingSocket(object):
         self._timeout_handler: Optional[TimerHandle] = None
         self.__timeout = timeout
 
-    def __del__(self: "PingSocket") -> None:
+    def __del__(self) -> None:
         """Perform cleanup on delete."""
         fd = getattr(self, "__sock_fd", None)
         if fd:
             with suppress(RuntimeError):
                 get_running_loop().remove_reader(self.__sock_fd)
 
-    def clean_ip(self: "PingSocket", addr: str) -> str:
+    def clean_ip(self, addr: str) -> str:
         """
         Normalize IP address to a stable form.
 
@@ -131,7 +125,7 @@ class PingSocket(object):
         return self.__sock.clean_ip(addr)
 
     async def ping(
-        self: "PingSocket",
+        self,
         addr: str,
         size: Optional[int] = None,
         request_id: int = 0,
@@ -165,7 +159,7 @@ class PingSocket(object):
         # Await response or timeout. set by _on_read
         return await fut
 
-    def _on_read(self: "PingSocket") -> None:
+    def _on_read(self) -> None:
         """Handle socket read event."""
         # Get bulk read info from Rust side
         seen = self.__sock.recv()

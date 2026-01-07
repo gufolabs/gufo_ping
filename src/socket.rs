@@ -1,33 +1,31 @@
 // ---------------------------------------------------------------------
 // Gufo Ping: SocketWrapper implementation
 // ---------------------------------------------------------------------
-// Copyright (C) 2022-25, Gufo Labs
+// Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
-use super::{IcmpPacket, Session};
-use coarsetime::Clock;
+use crate::{IcmpPacket, SessionManager, Timer, filter::Filter};
 use pyo3::{
     exceptions::{PyOSError, PyValueError},
     prelude::*,
 };
 use rand::Rng;
-#[cfg(target_os = "linux")]
-use socket2::SockFilter;
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::HashMap,
     convert::TryFrom,
     mem::MaybeUninit,
     net::{SocketAddr, SocketAddrV4, SocketAddrV6},
     ops::Not,
     os::unix::io::AsRawFd,
-    time::Instant,
 };
 use twox_hash::XxHash64;
 
 const MAX_SIZE: usize = 4096;
 const ICMP_SIZE: usize = 8;
+const REQUEST_TIMEOUT: u64 = 0;
 
+// @todo: Is necessary?
 enum Afi {
     IPV4,
     IPV6,
@@ -37,6 +35,7 @@ struct Proto {
     afi: Afi,
     domain: Domain,
     protocol: Protocol,
+    filter: Filter,
     ip_header_size: usize,
     icmp_request_type: u8,
     icmp_reply_type: u8,
@@ -46,6 +45,10 @@ static IPV4: Proto = Proto {
     afi: Afi::IPV4,
     domain: Domain::IPV4,
     protocol: Protocol::ICMPV4,
+    #[cfg(target_os = "linux")]
+    filter: Filter::LinuxRaw4,
+    #[cfg(not(target_os = "linux"))]
+    filter: Filter::None,
     ip_header_size: 20,
     icmp_request_type: 8,
     icmp_reply_type: 0,
@@ -55,6 +58,10 @@ static IPV6: Proto = Proto {
     afi: Afi::IPV6,
     domain: Domain::IPV6,
     protocol: Protocol::ICMPV6,
+    #[cfg(target_os = "linux")]
+    filter: Filter::LinuxRaw6,
+    #[cfg(not(target_os = "linux"))]
+    filter: Filter::None,
     ip_header_size: 0, // No IPv6 header is passed over socket
     icmp_request_type: 128,
     icmp_reply_type: 129,
@@ -65,11 +72,10 @@ static IPV6: Proto = Proto {
 pub(crate) struct SocketWrapper {
     proto: &'static Proto,
     io: Socket,
+    timer: Timer,
     signature: u64,
     timeout: u64,
-    sessions: BTreeSet<Session>,
-    start: Instant,
-    coarse: bool,
+    sessions: SessionManager,
     buf: [MaybeUninit<u8>; MAX_SIZE],
 }
 
@@ -77,27 +83,28 @@ pub(crate) struct SocketWrapper {
 impl SocketWrapper {
     /// Python constructor
     #[new]
-    fn new(afi: u8) -> PyResult<Self> {
+    fn new(afi: u8, timeout_ns: u64, coarse: bool) -> PyResult<Self> {
         let proto = match afi {
             4 => &IPV4,
             6 => &IPV6,
             _ => return Err(PyValueError::new_err("invalid afi".to_string())),
         };
+        // Generate socket signature
+        let signature = rand::rng().random();
         // Create socket for given address family
         let io = Socket::new(proto.domain, Type::RAW, Some(proto.protocol))
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
+        proto.filter.attach_filter(&io, signature)?;
         // Mark socket as non-blocking
         io.set_nonblocking(true)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
-        let mut rng = rand::rng();
         Ok(Self {
             proto,
             io,
-            signature: rng.random(),
-            sessions: BTreeSet::new(),
-            timeout: 1_000_000_000,
-            start: Instant::now(),
-            coarse: false,
+            timer: Timer::new(coarse),
+            signature,
+            sessions: SessionManager::new(),
+            timeout: timeout_ns,
             buf: unsafe { MaybeUninit::uninit().assume_init() },
         })
     }
@@ -110,12 +117,6 @@ impl SocketWrapper {
         self.io.bind(&src_addr)?;
         Ok(())
     }
-    /// Set default timeout, in nanoseconds
-    fn set_timeout(&mut self, timeout: u64) -> PyResult<()> {
-        self.timeout = timeout;
-        Ok(())
-    }
-
     /// Set default outgoing packets' TTL
     fn set_ttl(&self, ttl: u32) -> PyResult<()> {
         self.io.set_ttl_v4(ttl)?;
@@ -162,22 +163,6 @@ impl SocketWrapper {
         Err(PyOSError::new_err("unable to set buffer size"))
     }
 
-    /// Switch to CLOCK_MONOTONIC_COARSE implementation
-    fn set_coarse(&mut self, ct: bool) -> PyResult<()> {
-        self.coarse = ct;
-        Ok(())
-    }
-
-    /// Enable accelerated socket processing
-    fn set_accelerated(&self, a: bool) -> PyResult<()> {
-        if a {
-            self.enable_accelerated()?
-        } else {
-            self.disable_accelerated()?
-        }
-        Ok(())
-    }
-
     /// Get socket's file descriptor
     fn get_fd(&self) -> PyResult<i32> {
         Ok(self.io.as_raw_fd())
@@ -198,7 +183,7 @@ impl SocketWrapper {
             Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
         };
         // Get timestamp
-        let ts = self.get_ts();
+        let ts = self.timer.get_ts();
         let pkt = IcmpPacket::new(
             self.proto.icmp_request_type,
             request_id,
@@ -213,7 +198,7 @@ impl SocketWrapper {
             .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
         let sid = self.get_sid(&to_addr, request_id, seq);
-        self.sessions.insert(Session::new(sid, ts + self.timeout));
+        self.sessions.register(sid, ts + self.timeout);
         Ok(sid)
     }
 
@@ -221,7 +206,7 @@ impl SocketWrapper {
     /// Returns dict of <session id> -> rtt
     fn recv(&mut self) -> PyResult<Option<HashMap<u64, u64>>> {
         let mut r = HashMap::<u64, u64>::new();
-        let ts = self.get_ts();
+        let ts = self.timer.get_ts();
         // Rewrite when recvmmsg function will be available.
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
             // Drop too short packets
@@ -242,35 +227,18 @@ impl SocketWrapper {
                 };
                 let sid = self.get_sid(&addr, pkt.get_request_id(), pkt.get_seq());
                 r.insert(sid, delay);
-                self.sessions
-                    .remove(&Session::new(sid, pkt_ts + self.timeout));
+                self.sessions.remove(sid, pkt_ts + self.timeout);
             }
         }
         // Check for expired sessions
-        while let Some(session) = self.sessions.first()
-            && session.is_expired(ts)
-            && let Some(s) = self.sessions.pop_first()
-        {
-            r.insert(s.get_sid(), 0); //Timeout
+        for sid in self.sessions.drain_expired(ts) {
+            r.insert(sid, REQUEST_TIMEOUT);
         }
         Ok(r.is_empty().not().then_some(r))
     }
 }
 
 impl SocketWrapper {
-    /// Get current timestamp.
-    /// Use CLOCK_MONOTONIC by default.
-    /// Switch to CLOCK_MONOTONIC_COARSE when .set_coarse(true)
-    pub fn get_ts(&self) -> u64 {
-        if self.coarse {
-            // CLOCK_MONOTONIC_COARSE
-            Clock::now_since_epoch().as_nanos()
-        } else {
-            // CLOCK_MONOTONIC
-            self.start.elapsed().as_nanos() as u64
-        }
-    }
-
     /// Generate session id
     fn get_sid(&self, addr: &SockAddr, request_id: u16, seq: u16) -> u64 {
         match addr.as_socket() {
@@ -286,62 +254,7 @@ impl SocketWrapper {
             None => 0,
         }
     }
-    /// Attach cBPF filter to socket to reduce context switches
-    #[cfg(target_os = "linux")]
-    fn enable_accelerated(&self) -> std::io::Result<()> {
-        #[inline]
-        fn op(code: u16, jt: u8, jf: u8, k: u32) -> SockFilter {
-            SockFilter::new(code, jt, jf, k)
-        }
 
-        match self.proto.afi {
-            Afi::IPV4 => {
-                let filters = [
-                    op(0x30, 0, 0, 0x00000014),                           // ldb [20]
-                    op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x0, drop
-                    op(0x20, 0, 0, 0x0000001c),                           // ld [28]
-                    op(0x15, 0, 3, (self.signature >> 32) as u32),        // jne #sig1, drop
-                    op(0x20, 0, 0, 0x00000020),                           // ld [32]
-                    op(0x15, 0, 1, (self.signature & 0xFFFFFFFF) as u32), // jne #sig2, drop
-                    op(0x06, 0, 0, 0xffffffff),                           // ret #-1
-                    op(0x06, 0, 0, 0000000000),                           // drop: ret #0
-                ];
-                self.io.attach_filter(&filters)?;
-            }
-            Afi::IPV6 => {
-                let filters = [
-                    op(0x30, 0, 0, 0x00000000),                           // ldb [0]
-                    op(0x15, 0, 5, self.proto.icmp_reply_type as u32),    // jne #0x81, drop
-                    op(0x20, 0, 0, 0x00000008),                           // ld [8]
-                    op(0x15, 0, 3, (self.signature >> 32) as u32),        // jne #sig1, drop
-                    op(0x20, 0, 0, 0x0000000c),                           // ld [12]
-                    op(0x15, 0, 1, (self.signature & 0xFFFFFFFF) as u32), // jne #sig2, drop
-                    op(0x06, 0, 0, 0xffffffff),                           // ret #-1
-                    op(0x06, 0, 0, 0000000000),                           // drop: ret #0
-                ];
-
-                self.io.attach_filter(&filters)?;
-            }
-        }
-        Ok(())
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn enable_accelerated(&self) -> std::io::Result<()> {
-        Ok(())
-    }
-
-    /// Remove BPF filter from socket
-    #[cfg(target_os = "linux")]
-    fn disable_accelerated(&self) -> std::io::Result<()> {
-        self.io.detach_filter()?;
-        Ok(())
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn disable_accelerated(&self) -> std::io::Result<()> {
-        Ok(())
-    }
     // Assume buffer initialized
     // @todo: Replace with BufRead.filled()
     // @todo: Replace when `maybe_uninit_slice` feature

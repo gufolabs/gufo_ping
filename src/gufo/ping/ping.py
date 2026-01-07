@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Ping implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 """Ping client implementation."""
@@ -51,8 +51,6 @@ class Ping(object):
             Use OS defaults when empty.
         coarse: Use CLOCK_MONOTONIC_COARSE when set,
             fall back to CLOCK_MONOTONIC otherwise.
-        accelerated: Enable platform-dependend accelerated
-            socket processing.
 
     Note:
         Opening the Raw Socket may require super-user priveleges
@@ -86,7 +84,7 @@ class Ping(object):
     request_id = itertools.count(random.randint(0, 0xFFFF))
 
     def __init__(
-        self: "Ping",
+        self,
         size: int = 64,
         src_addr: Union[None, str, Iterable[str]] = None,
         ttl: Optional[int] = None,
@@ -95,7 +93,6 @@ class Ping(object):
         send_buffer_size: Optional[int] = None,
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
-        accelerated: bool = True,
     ) -> None:
         self.__size = size
         self.__src_addr = self._get_src_addr(src_addr)
@@ -105,7 +102,6 @@ class Ping(object):
         self.__send_buffer_size = send_buffer_size
         self.__recv_buffer_size = recv_buffer_size
         self.__coarse = coarse
-        self.__accelerated = accelerated
         self.__sockets: Dict[int, PingSocket] = {}
 
     @staticmethod
@@ -153,7 +149,7 @@ class Ping(object):
                 r[afi] = a
         return r
 
-    def __get_socket(self: "Ping", address: str) -> PingSocket:
+    def __get_socket(self, address: str) -> PingSocket:
         """
         Get PingSocket instace.
 
@@ -179,12 +175,11 @@ class Ping(object):
                 send_buffer_size=self.__send_buffer_size,
                 recv_buffer_size=self.__recv_buffer_size,
                 coarse=self.__coarse,
-                accelerated=self.__accelerated,
             )
             self.__sockets[afi] = sock
         return sock
 
-    def __get_request_id(self: "Ping") -> Tuple[int, int]:
+    def __get_request_id(self) -> Tuple[int, int]:
         """
         Get request id.
 
@@ -199,7 +194,7 @@ class Ping(object):
         return request_id, seq
 
     async def ping(
-        self: "Ping",
+        self,
         addr: str,
         size: Optional[int] = None,
     ) -> Optional[float]:
@@ -223,7 +218,7 @@ class Ping(object):
         return await sock.ping(addr, size=size, request_id=request_id, seq=seq)
 
     async def iter_rtt(
-        self: "Ping",
+        self,
         addr: str,
         *,
         size: Optional[int] = None,
