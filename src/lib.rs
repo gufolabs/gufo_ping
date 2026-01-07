@@ -12,6 +12,8 @@ pub(crate) mod icmp;
 pub(crate) use icmp::IcmpPacket;
 pub(crate) mod socket;
 pub(crate) use socket::SocketWrapper;
+pub(crate) mod timer;
+pub(crate) use timer::Timer;
 
 /// Module index
 #[pymodule]

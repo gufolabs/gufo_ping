@@ -4,8 +4,7 @@
 // Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
-use crate::{IcmpPacket, SessionManager, filter::Filter};
-use coarsetime::Clock;
+use crate::{IcmpPacket, SessionManager, Timer, filter::Filter};
 use pyo3::{
     exceptions::{PyOSError, PyValueError},
     prelude::*,
@@ -19,7 +18,6 @@ use std::{
     net::{SocketAddr, SocketAddrV4, SocketAddrV6},
     ops::Not,
     os::unix::io::AsRawFd,
-    time::Instant,
 };
 use twox_hash::XxHash64;
 
@@ -74,11 +72,10 @@ static IPV6: Proto = Proto {
 pub(crate) struct SocketWrapper {
     proto: &'static Proto,
     io: Socket,
+    timer: Timer,
     signature: u64,
     timeout: u64,
     sessions: SessionManager,
-    start: Instant,
-    coarse: bool,
     buf: [MaybeUninit<u8>; MAX_SIZE],
 }
 
@@ -104,11 +101,10 @@ impl SocketWrapper {
         Ok(Self {
             proto,
             io,
+            timer: Timer::new(coarse),
             signature,
             sessions: SessionManager::new(),
             timeout: timeout_ns,
-            start: Instant::now(),
-            coarse,
             buf: unsafe { MaybeUninit::uninit().assume_init() },
         })
     }
@@ -187,7 +183,7 @@ impl SocketWrapper {
             Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
         };
         // Get timestamp
-        let ts = self.get_ts();
+        let ts = self.timer.get_ts();
         let pkt = IcmpPacket::new(
             self.proto.icmp_request_type,
             request_id,
@@ -210,7 +206,7 @@ impl SocketWrapper {
     /// Returns dict of <session id> -> rtt
     fn recv(&mut self) -> PyResult<Option<HashMap<u64, u64>>> {
         let mut r = HashMap::<u64, u64>::new();
-        let ts = self.get_ts();
+        let ts = self.timer.get_ts();
         // Rewrite when recvmmsg function will be available.
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
             // Drop too short packets
@@ -243,19 +239,6 @@ impl SocketWrapper {
 }
 
 impl SocketWrapper {
-    /// Get current timestamp.
-    /// Use CLOCK_MONOTONIC by default.
-    /// Switch to CLOCK_MONOTONIC_COARSE when .set_coarse(true)
-    pub fn get_ts(&self) -> u64 {
-        if self.coarse {
-            // CLOCK_MONOTONIC_COARSE
-            Clock::now_since_epoch().as_nanos()
-        } else {
-            // CLOCK_MONOTONIC
-            self.start.elapsed().as_nanos() as u64
-        }
-    }
-
     /// Generate session id
     fn get_sid(&self, addr: &SockAddr, request_id: u16, seq: u16) -> u64 {
         match addr.as_socket() {
