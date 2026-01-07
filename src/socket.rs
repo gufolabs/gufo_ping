@@ -4,7 +4,7 @@
 // Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
-use crate::{IcmpPacket, SessionManager, Timer, filter::Filter};
+use crate::{IcmpPacket, SessionManager, Timer, filter::Filter, slice};
 use pyo3::{
     exceptions::{PyOSError, PyValueError},
     prelude::*,
@@ -105,7 +105,7 @@ impl SocketWrapper {
             signature,
             sessions: SessionManager::new(),
             timeout: timeout_ns,
-            buf: unsafe { MaybeUninit::uninit().assume_init() },
+            buf: slice::get_buffer_mut(),
         })
     }
 
@@ -193,7 +193,7 @@ impl SocketWrapper {
             size - self.proto.ip_header_size,
         );
         let n = pkt.write(&mut self.buf);
-        let buf = Self::slice_assume_init_ref(&self.buf[..n]);
+        let buf = slice::slice_assume_init_ref(&self.buf[..n]);
         self.io
             .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
@@ -213,7 +213,7 @@ impl SocketWrapper {
             if size < self.proto.ip_header_size + ICMP_SIZE {
                 continue;
             }
-            let buf = Self::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
+            let buf = slice::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
             // Parse packet
             if let Ok(pkt) = IcmpPacket::try_from(buf)
                 && pkt.is_match(self.proto.icmp_reply_type, self.signature)
@@ -253,15 +253,6 @@ impl SocketWrapper {
             },
             None => 0,
         }
-    }
-
-    // Assume buffer initialized
-    // @todo: Replace with BufRead.filled()
-    // @todo: Replace when `maybe_uninit_slice` feature
-    // will be stabilized
-    const fn slice_assume_init_ref(slice: &[MaybeUninit<u8>]) -> &[u8] {
-        //MaybeUninit::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
-        unsafe { &*(slice as *const [MaybeUninit<u8>] as *const [u8]) }
     }
 }
 
