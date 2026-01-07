@@ -7,7 +7,7 @@
 use pyo3::prelude::*;
 pub(crate) mod filter;
 pub(crate) mod session;
-pub(crate) use session::Session;
+pub(crate) use session::SessionManager;
 pub(crate) mod icmp;
 pub(crate) use icmp::IcmpPacket;
 pub(crate) mod socket;

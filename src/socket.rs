@@ -4,7 +4,7 @@
 // Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
-use crate::{IcmpPacket, Session, filter::Filter};
+use crate::{IcmpPacket, SessionManager, filter::Filter};
 use coarsetime::Clock;
 use pyo3::{
     exceptions::{PyOSError, PyValueError},
@@ -13,7 +13,7 @@ use pyo3::{
 use rand::Rng;
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::HashMap,
     convert::TryFrom,
     mem::MaybeUninit,
     net::{SocketAddr, SocketAddrV4, SocketAddrV6},
@@ -25,6 +25,7 @@ use twox_hash::XxHash64;
 
 const MAX_SIZE: usize = 4096;
 const ICMP_SIZE: usize = 8;
+const REQUEST_TIMEOUT: u64 = 0;
 
 // @todo: Is necessary?
 enum Afi {
@@ -75,7 +76,7 @@ pub(crate) struct SocketWrapper {
     io: Socket,
     signature: u64,
     timeout: u64,
-    sessions: BTreeSet<Session>,
+    sessions: SessionManager,
     start: Instant,
     coarse: bool,
     buf: [MaybeUninit<u8>; MAX_SIZE],
@@ -104,7 +105,7 @@ impl SocketWrapper {
             proto,
             io,
             signature,
-            sessions: BTreeSet::new(),
+            sessions: SessionManager::new(),
             timeout: 1_000_000_000,
             start: Instant::now(),
             coarse: false,
@@ -213,7 +214,7 @@ impl SocketWrapper {
             .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
         let sid = self.get_sid(&to_addr, request_id, seq);
-        self.sessions.insert(Session::new(sid, ts + self.timeout));
+        self.sessions.register(sid, ts + self.timeout);
         Ok(sid)
     }
 
@@ -242,16 +243,12 @@ impl SocketWrapper {
                 };
                 let sid = self.get_sid(&addr, pkt.get_request_id(), pkt.get_seq());
                 r.insert(sid, delay);
-                self.sessions
-                    .remove(&Session::new(sid, pkt_ts + self.timeout));
+                self.sessions.remove(sid, pkt_ts + self.timeout);
             }
         }
         // Check for expired sessions
-        while let Some(session) = self.sessions.first()
-            && session.is_expired(ts)
-            && let Some(s) = self.sessions.pop_first()
-        {
-            r.insert(s.get_sid(), 0); //Timeout
+        for sid in self.sessions.drain_expired(ts) {
+            r.insert(sid, REQUEST_TIMEOUT);
         }
         Ok(r.is_empty().not().then_some(r))
     }
