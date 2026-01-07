@@ -1,9 +1,10 @@
 // ---------------------------------------------------------------------
 // Gufo Ping: ICMP packet constructing and parsing
 // ---------------------------------------------------------------------
-// Copyright (C) 2022-25, Gufo Labs
+// Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
+use crate::slice;
 use byteorder::{BigEndian, ByteOrder};
 use internet_checksum::checksum;
 use std::convert::TryFrom;
@@ -81,18 +82,11 @@ impl IcmpPacket {
         self.icmp_type == icmp_type && self.signature == sig
     }
 
-    // @todo: Replace with MaybeUninit::slice_assume_init_mut
-    // when `maybe_uninit_slice` feature will be stabilized
-    #[inline(always)]
-    fn slice_assume_init_mut(slice: &mut [MaybeUninit<u8>]) -> &mut [u8] {
-        unsafe { &mut *(slice as *mut [MaybeUninit<u8>] as *mut [u8]) }
-    }
-
     /// Write packet to buffer
     pub fn write(&self, buf: &mut [MaybeUninit<u8>]) -> usize {
         //
         // Assume buffer initialized
-        let buf = Self::slice_assume_init_mut(&mut buf[..self.size]);
+        let buf = slice::slice_assume_init_mut(&mut buf[..self.size]);
         // Write type, fill code and checksum with 0
         BigEndian::write_u32(buf, (self.icmp_type as u32) << 24);
         // Request id, 2 octets
@@ -179,12 +173,9 @@ mod tests {
 
     #[test]
     fn test_icmpv4_write() {
-        let mut buf: [MaybeUninit<u8>; 4096] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut buf = slice::get_buffer_mut();
         let n = ICMPV4_REQ_PKT.write(&mut buf);
-        let result = unsafe {
-            // slice_assume_init_ref
-            &*(&buf[..n] as *const [MaybeUninit<u8>] as *const [u8])
-        };
+        let result = slice::slice_assume_init_ref(&buf[..n]);
         assert_eq!(result, ICMPV4_REQ);
     }
 

@@ -10,6 +10,7 @@ pub(crate) mod session;
 pub(crate) use session::SessionManager;
 pub(crate) mod icmp;
 pub(crate) use icmp::IcmpPacket;
+pub(crate) mod slice;
 pub(crate) mod socket;
 pub(crate) use socket::SocketWrapper;
 pub(crate) mod timer;
