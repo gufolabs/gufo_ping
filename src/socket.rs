@@ -8,7 +8,12 @@ use crate::{Probe, Proto, SelectionPolicy, SessionManager, Timer, slice};
 use pyo3::{exceptions::PyOSError, prelude::*};
 use socket2::{SockAddr, Socket};
 use std::{
-    collections::HashMap, mem::MaybeUninit, net::SocketAddr, ops::Not, os::unix::io::AsRawFd,
+    collections::HashMap,
+    mem::MaybeUninit,
+    net::SocketAddr,
+    ops::Not,
+    os::unix::io::AsRawFd,
+    sync::atomic::{AtomicU16, Ordering},
 };
 use twox_hash::XxHash64;
 
@@ -22,6 +27,7 @@ pub(crate) struct SocketWrapper {
     io: Socket,
     timer: Timer,
     signature: u64,
+    seq: AtomicU16,
     timeout: u64,
     sessions: SessionManager,
     buf: [MaybeUninit<u8>; MAX_SIZE],
@@ -41,6 +47,7 @@ impl SocketWrapper {
             io,
             timer: Timer::new(coarse),
             signature,
+            seq: AtomicU16::new(Self::scramble_to_u16(signature)),
             sessions: SessionManager::new(),
             timeout: timeout_ns,
             buf: slice::get_buffer_mut(),
@@ -108,11 +115,12 @@ impl SocketWrapper {
         Ok(self.proto.to_ip(addr)?)
     }
     /// Send single ICMP echo request
-    fn send(&mut self, addr: &str, seq: u16, size: usize) -> PyResult<u64> {
+    fn send(&mut self, addr: &str, size: usize) -> PyResult<u64> {
         // Parse IP address
         let to_addr = self.proto.to_sockaddr(addr)?;
         // Get timestamp
         let ts = self.timer.get_ts();
+        let seq = self.next_seq();
         let probe = Probe::new(seq, self.signature, ts);
         let request_id = probe.get_request_id();
         let buf = self.proto.encode_request(probe, &mut self.buf, size);
@@ -171,17 +179,28 @@ impl SocketWrapper {
             None => 0,
         }
     }
+    // Scramble u64 to u16
+    fn scramble_to_u16(v: u64) -> u16 {
+        let s1 = (v >> 32) as u32 ^ v as u32;
+        (s1 >> 16) as u16 ^ s1 as u16
+    }
+
+    // Generate next sequence number
+    #[inline(always)]
+    fn next_seq(&self) -> u16 {
+        self.seq.fetch_add(1, Ordering::Relaxed)
+    }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn test_ipv4_sid() {
-//         let sock = SocketWrapper::new(4).unwrap();
-//         let addr = SocketAddrV4::new("127.0.0.1".parse().unwrap(), 0);
-//         let sid = sock.get_sid(&addr.into(), 0x102, 1);
-//         assert_eq!(sid, 1);
-//     }
-// }
+    #[test]
+    fn test_scramble_to_u16() {
+        let v = [(0u64, 0u16), (0xffffffffffffffff, 0), (1, 1)];
+        for (r, expected) in v.iter() {
+            assert_eq!(SocketWrapper::scramble_to_u16(*r), *expected);
+        }
+    }
+}

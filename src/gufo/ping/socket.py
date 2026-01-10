@@ -138,7 +138,7 @@ class PingSocket(object):
         if recv_buffer_size is not None:
             self.__sock.set_recv_buffer_size(recv_buffer_size)
         self.__sock_fd = self.__sock.get_fd()
-        #  <addr>-<request id>-<seq> -> future
+        #  session id -> future
         self.__sessions: Dict[int, Future[Optional[float]]] = {}
         # Install response reader
         get_running_loop().add_reader(self.__sock_fd, self._on_read)
@@ -168,7 +168,6 @@ class PingSocket(object):
         self,
         addr: str,
         size: Optional[int] = None,
-        seq: int = 0,
     ) -> Optional[float]:
         """
         Send ICMP echo request and await for result.
@@ -176,15 +175,13 @@ class PingSocket(object):
         Args:
             addr: Socket to ping.
             size: Packet size in bytes, including IP header.
-            request_id: ICMP request id.
-            seq: ICMP sequental number.
         """
         if ":" in addr:
             # Convert IPv6 address to compact form
             addr = self.__sock.clean_ip(addr)
         # Build and send the packet
         try:
-            sid = self.__sock.send(addr, seq, size or self.__size)
+            sid = self.__sock.send(addr, size or self.__size)
         except OSError:
             # Some kernels raise OSError (Network Unreachable)
             # when cannot find the route. Treat them as losses.

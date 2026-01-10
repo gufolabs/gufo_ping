@@ -92,14 +92,12 @@ class SocketProto(Protocol):
             file descriptor for open socket.
         """
 
-    def send(self, addr: str, seq: int, size: int) -> int:
+    def send(self, addr: str, size: int) -> int:
         """
         Generate and send icmp request packet.
 
         Args:
             addr: Destination address.
-            request_id: ICMP request id.
-            seq: ICMP sequental number.
             size: Outgoing packet's size in bytes, including IP header.
 
         Returns:
