@@ -15,10 +15,19 @@ Attributes:
 # Python modules
 from asyncio import Future, TimerHandle, get_running_loop
 from contextlib import suppress
+from enum import IntEnum
 from typing import Dict, Optional, cast
 
 # Gufo Labs modules
-from ._fast import SocketWrapper
+from ._fast import (
+    PS_DGRAM,
+    PS_DGRAM_RAW,
+    PS_IPV4,
+    PS_IPV6,
+    PS_RAW,
+    PS_RAW_DGRAM,
+    SocketWrapper,
+)
 from .proto import SocketProto
 
 NS = 1_000_000_000.0
@@ -26,6 +35,32 @@ IPv4 = 4
 IPv6 = 6
 MAX_TTL = 255
 MAX_TOS = 255
+
+POLICY_SHIFT = {IPv4: PS_IPV4, IPv6: PS_IPV6}
+
+
+class SelectionPolicy(IntEnum):
+    """
+    Probe selection policy.
+
+    Allows automatical selection between implementations:
+
+    * `RAW` - Raw sockets, requires root user (POSIX platforms)
+        or CAP_NET_RAW capability (Linux).
+    * `DGRAM` - ICMP datagram socket (Linux only). Requires
+        `net.ipv4.ping_group_range` to contain process' group.
+
+    Attributes:
+        RAW: Use RAW only.
+        RAW_DGRAM: Try RAW, fallback to DGRAM.
+        DGRAM_RAW: Try DGRAM, fallback to RAW.
+        DGRAM: Use DGRAM only.
+    """
+
+    RAW = PS_RAW
+    RAW_DGRAM = PS_RAW_DGRAM
+    DGRAM_RAW = PS_DGRAM_RAW
+    DGRAM = PS_DGRAM
 
 
 class PingSocket(object):
@@ -36,7 +71,8 @@ class PingSocket(object):
     Wraps Rust socket implementation.
 
     Args:
-        afi: Address Family. Either 4 or 6
+        afi: Address Family. Either IPv4 or IPv6.
+        policy: Probe selection policy.
         size: Set outgoing packet's size, including IP header.
         src_addr: Optional source address of outgoing packets.
         ttl: Set outgoing packet's TTL.
@@ -57,6 +93,7 @@ class PingSocket(object):
     def __init__(
         self,
         afi: int = IPv4,
+        policy: SelectionPolicy = SelectionPolicy.RAW,
         size: int = 64,
         src_addr: Optional[str] = None,
         ttl: Optional[int] = None,
@@ -77,9 +114,12 @@ class PingSocket(object):
             msg = f"tos must be in 0..{MAX_TOS} range"
             raise ValueError(msg)
         self.__size = size
+        # Calculate effective policy
+        selection_policy = POLICY_SHIFT[afi] + policy.value
         # Create and initialize wrapped socket
         self.__sock: SocketProto = cast(
-            SocketProto, SocketWrapper(afi, int(timeout * NS), coarse)
+            SocketProto,
+            SocketWrapper(selection_policy, int(timeout * NS), coarse),
         )
         if src_addr:
             self.__sock.bind(src_addr)

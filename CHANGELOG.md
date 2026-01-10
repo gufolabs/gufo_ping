@@ -12,6 +12,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ## [Upcoming]
 
+### Added
+
+* `SelectionPolicy` to select preferred probe method.
+
 ### Removed
 
 * Python 3.9 support.

@@ -14,7 +14,7 @@ from time import perf_counter
 from typing import AsyncIterable, Dict, Iterable, Optional, Tuple, Union
 
 # Gufo Labs modules
-from .socket import IPv4, IPv6, PingSocket
+from .socket import IPv4, IPv6, PingSocket, SelectionPolicy
 
 
 class Ping(object):
@@ -22,6 +22,7 @@ class Ping(object):
     High-performance asyncronous ICMPv4/ICMPv6 ping client.
 
     Args:
+        policy: Probe selection policy.
         size: Set outgoing packet's size, including IP header.
         src_addr: Set source address for outgoing packets.
             Depends upon address family. May be one of:
@@ -85,6 +86,7 @@ class Ping(object):
 
     def __init__(
         self,
+        policy: SelectionPolicy = SelectionPolicy.RAW,
         size: int = 64,
         src_addr: Union[None, str, Iterable[str]] = None,
         ttl: Optional[int] = None,
@@ -94,6 +96,7 @@ class Ping(object):
         recv_buffer_size: Optional[int] = None,
         coarse: bool = False,
     ) -> None:
+        self.__policy = policy
         self.__size = size
         self.__src_addr = self._get_src_addr(src_addr)
         self.__ttl = ttl
@@ -167,6 +170,7 @@ class Ping(object):
         if not sock:
             sock = PingSocket(
                 afi=afi,
+                policy=self.__policy,
                 size=self.__size,
                 src_addr=self.__src_addr.get(afi),
                 ttl=self.__ttl,

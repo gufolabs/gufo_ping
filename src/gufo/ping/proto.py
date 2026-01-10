@@ -18,7 +18,7 @@ class SocketProto(Protocol):
     implementing low-level details of the PingSocket.
     """
 
-    def __init__(self, afi: int, timeout_ns: int, coarse: bool) -> None: ...
+    def __init__(self, policy: int, timeout_ns: int, coarse: bool) -> None: ...
 
     def bind(self, addr: str) -> None:
         """
