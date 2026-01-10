@@ -46,3 +46,13 @@ def test_cli_die() -> None:
 )
 def test_policy(v: str, expected: SelectionPolicy) -> None:
     assert Cli._get_policy(v) == expected
+
+
+@pytest.mark.parametrize("xclass", [NotImplementedError, PermissionError])
+def test_probe_exceptions(xclass: type[BaseException]) -> None:
+    class FaultyCli(Cli):
+        async def _run(self, *args, **kwargs):
+            raise xclass
+
+    with pytest.raises(SystemExit):
+        FaultyCli().run(["-c", "1", "127.0.0.1"])
