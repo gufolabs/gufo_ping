@@ -3,3 +3,4 @@ ignore:
   - tests/
   - "**/*.pyi"
   - "coverage.xml"
+  - "src/gufo/ping/proto.py"

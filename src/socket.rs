@@ -4,68 +4,16 @@
 // Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
 
-use crate::{IcmpPacket, SessionManager, Timer, filter::Filter, slice};
-use pyo3::{
-    exceptions::{PyOSError, PyValueError},
-    prelude::*,
-};
-use rand::Rng;
-use socket2::{Domain, Protocol, SockAddr, Socket, Type};
+use crate::{Probe, Proto, SelectionPolicy, SessionManager, Timer, slice};
+use pyo3::{exceptions::PyOSError, prelude::*};
+use socket2::{SockAddr, Socket};
 use std::{
-    collections::HashMap,
-    convert::TryFrom,
-    mem::MaybeUninit,
-    net::{SocketAddr, SocketAddrV4, SocketAddrV6},
-    ops::Not,
-    os::unix::io::AsRawFd,
+    collections::HashMap, mem::MaybeUninit, net::SocketAddr, ops::Not, os::unix::io::AsRawFd,
 };
 use twox_hash::XxHash64;
 
 const MAX_SIZE: usize = 4096;
-const ICMP_SIZE: usize = 8;
 const REQUEST_TIMEOUT: u64 = 0;
-
-// @todo: Is necessary?
-enum Afi {
-    IPV4,
-    IPV6,
-}
-
-struct Proto {
-    afi: Afi,
-    domain: Domain,
-    protocol: Protocol,
-    filter: Filter,
-    ip_header_size: usize,
-    icmp_request_type: u8,
-    icmp_reply_type: u8,
-}
-
-static IPV4: Proto = Proto {
-    afi: Afi::IPV4,
-    domain: Domain::IPV4,
-    protocol: Protocol::ICMPV4,
-    #[cfg(target_os = "linux")]
-    filter: Filter::LinuxRaw4,
-    #[cfg(not(target_os = "linux"))]
-    filter: Filter::None,
-    ip_header_size: 20,
-    icmp_request_type: 8,
-    icmp_reply_type: 0,
-};
-
-static IPV6: Proto = Proto {
-    afi: Afi::IPV6,
-    domain: Domain::IPV6,
-    protocol: Protocol::ICMPV6,
-    #[cfg(target_os = "linux")]
-    filter: Filter::LinuxRaw6,
-    #[cfg(not(target_os = "linux"))]
-    filter: Filter::None,
-    ip_header_size: 0, // No IPv6 header is passed over socket
-    icmp_request_type: 128,
-    icmp_reply_type: 129,
-};
 
 /// Python class wrapping socket implementation
 #[pyclass]
@@ -83,21 +31,11 @@ pub(crate) struct SocketWrapper {
 impl SocketWrapper {
     /// Python constructor
     #[new]
-    fn new(afi: u8, timeout_ns: u64, coarse: bool) -> PyResult<Self> {
-        let proto = match afi {
-            4 => &IPV4,
-            6 => &IPV6,
-            _ => return Err(PyValueError::new_err("invalid afi".to_string())),
-        };
-        // Generate socket signature
-        let signature = rand::rng().random();
-        // Create socket for given address family
-        let io = Socket::new(proto.domain, Type::RAW, Some(proto.protocol))
-            .map_err(|e| PyOSError::new_err(e.to_string()))?;
-        proto.filter.attach_filter(&io, signature)?;
-        // Mark socket as non-blocking
-        io.set_nonblocking(true)
-            .map_err(|e| PyOSError::new_err(e.to_string()))?;
+    fn new(policy_id: u8, timeout_ns: u64, coarse: bool) -> PyResult<Self> {
+        let policy = SelectionPolicy::try_from(policy_id)?;
+        let proto = <&'static Proto>::try_from(policy)?;
+        // Create socket
+        let (io, signature) = proto.create_socket()?;
         Ok(Self {
             proto,
             io,
@@ -110,10 +48,7 @@ impl SocketWrapper {
     }
 
     fn bind(&mut self, addr: &str) -> PyResult<()> {
-        let src_addr: SockAddr = match self.proto.afi {
-            Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
-            Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
-        };
+        let src_addr = self.proto.to_sockaddr(addr)?;
         self.io.bind(&src_addr)?;
         Ok(())
     }
@@ -169,31 +104,17 @@ impl SocketWrapper {
     }
 
     /// Normalize address
-    fn clean_ip(&self, addr: String) -> PyResult<String> {
-        Ok(match self.proto.afi {
-            Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).ip().to_string(),
-            Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).ip().to_string(),
-        })
+    fn clean_ip(&self, addr: &str) -> PyResult<String> {
+        Ok(self.proto.to_ip(addr)?)
     }
     /// Send single ICMP echo request
-    fn send(&mut self, addr: String, request_id: u16, seq: u16, size: usize) -> PyResult<u64> {
+    fn send(&mut self, addr: &str, request_id: u16, seq: u16, size: usize) -> PyResult<u64> {
         // Parse IP address
-        let to_addr: SockAddr = match self.proto.afi {
-            Afi::IPV4 => SocketAddrV4::new(addr.parse()?, 0).into(),
-            Afi::IPV6 => SocketAddrV6::new(addr.parse()?, 0, 0, 0).into(),
-        };
+        let to_addr = self.proto.to_sockaddr(addr)?;
         // Get timestamp
         let ts = self.timer.get_ts();
-        let pkt = IcmpPacket::new(
-            self.proto.icmp_request_type,
-            request_id,
-            seq,
-            self.signature,
-            ts,
-            size - self.proto.ip_header_size,
-        );
-        let n = pkt.write(&mut self.buf);
-        let buf = slice::slice_assume_init_ref(&self.buf[..n]);
+        let probe = Probe::new(request_id, seq, self.signature, ts);
+        let buf = self.proto.encode_request(probe, &mut self.buf, size);
         self.io
             .send_to(buf, &to_addr)
             .map_err(|e| PyOSError::new_err(e.to_string()))?;
@@ -209,14 +130,9 @@ impl SocketWrapper {
         let ts = self.timer.get_ts();
         // Rewrite when recvmmsg function will be available.
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
-            // Drop too short packets
-            if size < self.proto.ip_header_size + ICMP_SIZE {
-                continue;
-            }
-            let buf = slice::slice_assume_init_ref(&self.buf[self.proto.ip_header_size..size]);
-            // Parse packet
-            if let Ok(pkt) = IcmpPacket::try_from(buf)
-                && pkt.is_match(self.proto.icmp_reply_type, self.signature)
+            let buf = slice::slice_assume_init_ref(&self.buf[..size]);
+            if let Some(pkt) = self.proto.decode_reply(buf)
+                && pkt.get_signature() == self.signature
             {
                 // Measure RTT
                 let pkt_ts = pkt.get_ts();

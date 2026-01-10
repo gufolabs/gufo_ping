@@ -9,8 +9,15 @@
 # Python modules
 from typing import Dict, Optional
 
+PS_DGRAM: int
+PS_DGRAM_RAW: int
+PS_IPV4: int
+PS_IPV6: int
+PS_RAW: int
+PS_RAW_DGRAM: int
+
 class SocketWrapper(object):
-    def __init__(self, afi: int, timeout_ns: int, coarse: bool) -> None: ...
+    def __init__(self, policy: int, timeout_ns: int, coarse: bool) -> None: ...
     def bind(self, addr: str) -> None: ...
     def set_ttl(self, ttl: int) -> None: ...
     def set_unicast_hops(self, ttl: int) -> None: ...
