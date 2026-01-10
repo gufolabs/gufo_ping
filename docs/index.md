@@ -39,7 +39,7 @@ async for rtt in ping.iter_rtt("127.0.0.1", count=5):
 
 Gufo Ping is really fast, allowing to probe 100 000+ hosts at once.
 
-## Virtues
+## Features
 
 * Clean async API.
 * IPv4/IPv6 support.
