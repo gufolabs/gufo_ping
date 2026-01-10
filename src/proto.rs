@@ -150,7 +150,7 @@ impl Proto {
         // Write type, fill code and checksum with 0
         BigEndian::write_u32(buf, (self.icmp_request_type as u32) << 24);
         // Request id, 2 octets
-        BigEndian::write_u16(&mut buf[REQUEST_ID_OFFSET..], probe.request_id);
+        BigEndian::write_u16(&mut buf[REQUEST_ID_OFFSET..], probe.get_request_id());
         // Sequence, 2 octets
         BigEndian::write_u16(&mut buf[SEQUENCE_OFFSET..], probe.seq);
         // Signature, 8 octets
@@ -177,8 +177,8 @@ impl Proto {
         if buf[ICMP_TYPE_OFFSET] != self.icmp_reply_type {
             return None;
         }
+        // @todo: request id must match two lower bits of signature
         Some(Probe {
-            request_id: BigEndian::read_u16(&buf[REQUEST_ID_OFFSET..]),
             seq: BigEndian::read_u16(&buf[SEQUENCE_OFFSET..]),
             signature: BigEndian::read_u64(&buf[SIGNATURE_OFFSET..]),
             ts: BigEndian::read_u64(&buf[TIMESTAMP_OFFSET..]),
@@ -204,25 +204,19 @@ impl Proto {
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Probe {
-    request_id: u16,
     seq: u16,
     signature: u64,
     ts: u64,
 }
 
 impl Probe {
-    pub fn new(request_id: u16, seq: u16, signature: u64, ts: u64) -> Self {
-        Probe {
-            request_id,
-            seq,
-            signature,
-            ts,
-        }
+    pub fn new(seq: u16, signature: u64, ts: u64) -> Self {
+        Probe { seq, signature, ts }
     }
 
     #[inline]
     pub fn get_request_id(&self) -> u16 {
-        self.request_id
+        self.signature as u16
     }
 
     #[inline]
@@ -327,7 +321,7 @@ mod tests {
     use super::*;
     use crate::slice::get_buffer_mut;
 
-    const TEST_REQUEST_ID: u16 = 0x0102;
+    const TEST_REQUEST_ID: u16 = 0xbeef;
     const TEST_SEQ: u16 = 1;
     const TEST_SIGNATURE: u64 = 0xdeadbeef;
     const TEST_TIMESTAMP: u64 = 0x01020304;
@@ -389,15 +383,15 @@ mod tests {
         let proto = &PROTOCOLS[ProtocolItem::IPv4Raw as usize];
         let mut buf = get_buffer_mut();
         let buf = proto.encode_request(
-            Probe::new(TEST_REQUEST_ID, TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
             &mut buf,
             SIZE,
         );
         assert_eq!(
             buf,
             &[
-                8, 0, 0x55, 0x59, // Type, Code, Checksum
-                1, 2, 0, 1, // Request id, sequence
+                8, 0, 0x97, 0x6B, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
             ]
@@ -410,15 +404,15 @@ mod tests {
         let proto = &PROTOCOLS[ProtocolItem::IPv4Raw as usize];
         let mut buf = get_buffer_mut();
         let buf = proto.encode_request(
-            Probe::new(TEST_REQUEST_ID, TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
             &mut buf,
             SIZE,
         );
         assert_eq!(
             buf,
             &[
-                8, 0, 0x73, 0x77, // Type, Code, Checksum
-                1, 2, 0, 1, // Request id, sequence
+                8, 0, 0xB5, 0x89, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
                 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -435,7 +429,7 @@ mod tests {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, // IP header, faked
                 0, 0, 0, 0, // Type, Code, Checksum (faked)
-                1, 2, 0, 1, // Request id, sequence
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
             ])
@@ -453,7 +447,7 @@ mod tests {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, // IP header, faked
                 0, 0, 0, 0, // Type, Code, Checksum (faked)
-                1, 2, 0, 1, // Request id, sequence
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
                 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -471,7 +465,7 @@ mod tests {
         let probe = proto.decode_reply(&[
             0, // IP header, faked
             0, 0, 0, 0, // Type, Code, Checksum (faked)
-            1, 2, 0, 1, // Request id, sequence
+            0xBE, 0xEF, 0, 1, // Request id, sequence
             0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
             0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
         ]);
@@ -484,7 +478,7 @@ mod tests {
         let probe = proto.decode_reply(&[
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // IP header, faked
             8, 0, 0, 0, // Type, Code, Checksum (faked)
-            1, 2, 0, 1, // Request id, sequence
+            0xBE, 0xEF, 0, 1, // Request id, sequence
             0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
             0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
             0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -498,15 +492,15 @@ mod tests {
         let proto = &PROTOCOLS[ProtocolItem::IPv6Raw as usize];
         let mut buf = get_buffer_mut();
         let buf = proto.encode_request(
-            Probe::new(TEST_REQUEST_ID, TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
             &mut buf,
             SIZE,
         );
         assert_eq!(
             buf,
             &[
-                0x80, 0, 0xDD, 0x58, // Type, Code, Checksum
-                1, 2, 0, 1, // Request id, sequence
+                0x80, 0, 0x1F, 0x6B, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
             ]
@@ -519,15 +513,15 @@ mod tests {
         let proto = &PROTOCOLS[ProtocolItem::IPv6Raw as usize];
         let mut buf = get_buffer_mut();
         let buf = proto.encode_request(
-            Probe::new(TEST_REQUEST_ID, TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
             &mut buf,
             SIZE,
         );
         assert_eq!(
             buf,
             &[
-                0x80, 0, 0xFB, 0x76, // Type, Code, Checksum
-                1, 2, 0, 1, // Request id, sequence
+                0x80, 0, 0x3D, 0x89, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
                 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -542,7 +536,7 @@ mod tests {
         let probe = proto
             .decode_reply(&[
                 0x81, 0, 0, 0, // Type, Code, Checksum (faked)
-                1, 2, 0, 1, // Request id, sequence
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
             ])
@@ -558,7 +552,7 @@ mod tests {
         let probe = proto
             .decode_reply(&[
                 0x81, 0, 0, 0, // Type, Code, Checksum (faked)
-                1, 2, 0, 1, // Request id, sequence
+                0xBE, 0xEF, 0, 1, // Request id, sequence
                 0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
                 0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
                 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
@@ -586,7 +580,7 @@ mod tests {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // IP header, faked
             8, 0, 0, 0, // Type, Code, Checksum (faked)
-            1, 2, 0, 1, // Request id, sequence
+            0xBE, 0xEF, 0, 1, // Request id, sequence
             0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
             0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
             0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,

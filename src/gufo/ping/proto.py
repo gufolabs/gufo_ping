@@ -92,7 +92,7 @@ class SocketProto(Protocol):
             file descriptor for open socket.
         """
 
-    def send(self, addr: str, request_id: int, seq: int, size: int) -> int:
+    def send(self, addr: str, seq: int, size: int) -> int:
         """
         Generate and send icmp request packet.
 
