@@ -50,7 +50,7 @@ const PADDING_OFFSET: usize = ICMP_HEADER_SIZE + ICMP_PAYLOAD_SIZE;
 /// ```
 const ICMP_TYPE_OFFSET: usize = 0;
 const CHECKSUM_OFFSET: usize = 2;
-const REQUEST_ID_OFFSET: usize = 4;
+// const REQUEST_ID_OFFSET: usize = 4;
 const SEQUENCE_OFFSET: usize = 6;
 const SIGNATURE_OFFSET: usize = ICMP_HEADER_SIZE;
 const TIMESTAMP_OFFSET: usize = SIGNATURE_OFFSET + 8;
@@ -147,12 +147,17 @@ impl Proto {
     ) -> &'a [u8] {
         let size = size - self.ip_header_size; // Adjust to packet header
         let buf = slice::slice_assume_init_mut(&mut buf[..size]);
-        // Write type, fill code and checksum with 0
-        BigEndian::write_u32(buf, (self.icmp_request_type as u32) << 24);
-        // Request id, 2 octets
-        BigEndian::write_u16(&mut buf[REQUEST_ID_OFFSET..], probe.get_request_id());
-        // Sequence, 2 octets
-        BigEndian::write_u16(&mut buf[SEQUENCE_OFFSET..], probe.seq);
+        // Write:
+        // * type
+        // * Zeroes in code and checksum place
+        // * Request id
+        // * Sequence
+        BigEndian::write_u64(
+            buf,
+            ((self.icmp_request_type as u64) << 56)
+                | ((probe.get_request_id() as u64) << 16)
+                | (probe.seq as u64),
+        );
         // Signature, 8 octets
         BigEndian::write_u64(&mut buf[SIGNATURE_OFFSET..], probe.signature);
         // Timestamp, 8 octets

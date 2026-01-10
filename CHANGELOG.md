@@ -16,6 +16,10 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 * `SelectionPolicy` to select preferred probe method.
 
+### Changed
+
+* Rust implemenation how handles request ids and sequence number internally.
+
 ### Removed
 
 * Python 3.9 support.
