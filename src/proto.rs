@@ -150,7 +150,7 @@ impl Proto {
         // Write type, fill code and checksum with 0
         BigEndian::write_u32(buf, (self.icmp_request_type as u32) << 24);
         // Request id, 2 octets
-        BigEndian::write_u16(&mut buf[REQUEST_ID_OFFSET..], probe.request_id);
+        BigEndian::write_u16(&mut buf[REQUEST_ID_OFFSET..], probe.get_request_id());
         // Sequence, 2 octets
         BigEndian::write_u16(&mut buf[SEQUENCE_OFFSET..], probe.seq);
         // Signature, 8 octets
@@ -177,8 +177,8 @@ impl Proto {
         if buf[ICMP_TYPE_OFFSET] != self.icmp_reply_type {
             return None;
         }
+        // @todo: request id must match two lower bits of signature
         Some(Probe {
-            request_id: BigEndian::read_u16(&buf[REQUEST_ID_OFFSET..]),
             seq: BigEndian::read_u16(&buf[SEQUENCE_OFFSET..]),
             signature: BigEndian::read_u64(&buf[SIGNATURE_OFFSET..]),
             ts: BigEndian::read_u64(&buf[TIMESTAMP_OFFSET..]),
@@ -204,25 +204,19 @@ impl Proto {
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Probe {
-    request_id: u16,
     seq: u16,
     signature: u64,
     ts: u64,
 }
 
 impl Probe {
-    pub fn new(request_id: u16, seq: u16, signature: u64, ts: u64) -> Self {
-        Probe {
-            request_id,
-            seq,
-            signature,
-            ts,
-        }
+    pub fn new(seq: u16, signature: u64, ts: u64) -> Self {
+        Probe { seq, signature, ts }
     }
 
     #[inline]
     pub fn get_request_id(&self) -> u16 {
-        self.request_id
+        self.signature as u16
     }
 
     #[inline]

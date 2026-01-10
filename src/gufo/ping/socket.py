@@ -168,7 +168,6 @@ class PingSocket(object):
         self,
         addr: str,
         size: Optional[int] = None,
-        request_id: int = 0,
         seq: int = 0,
     ) -> Optional[float]:
         """
@@ -185,7 +184,7 @@ class PingSocket(object):
             addr = self.__sock.clean_ip(addr)
         # Build and send the packet
         try:
-            sid = self.__sock.send(addr, request_id, seq, size or self.__size)
+            sid = self.__sock.send(addr, seq, size or self.__size)
         except OSError:
             # Some kernels raise OSError (Network Unreachable)
             # when cannot find the route. Treat them as losses.

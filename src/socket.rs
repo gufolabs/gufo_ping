@@ -108,12 +108,13 @@ impl SocketWrapper {
         Ok(self.proto.to_ip(addr)?)
     }
     /// Send single ICMP echo request
-    fn send(&mut self, addr: &str, request_id: u16, seq: u16, size: usize) -> PyResult<u64> {
+    fn send(&mut self, addr: &str, seq: u16, size: usize) -> PyResult<u64> {
         // Parse IP address
         let to_addr = self.proto.to_sockaddr(addr)?;
         // Get timestamp
         let ts = self.timer.get_ts();
-        let probe = Probe::new(request_id, seq, self.signature, ts);
+        let probe = Probe::new(seq, self.signature, ts);
+        let request_id = probe.get_request_id();
         let buf = self.proto.encode_request(probe, &mut self.buf, size);
         self.io
             .send_to(buf, &to_addr)

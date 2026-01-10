@@ -8,10 +8,9 @@
 
 # Python modules
 import asyncio
-import itertools
 import random
 from time import perf_counter
-from typing import AsyncIterable, Dict, Iterable, Optional, Tuple, Union
+from typing import AsyncIterable, Dict, Iterable, Optional, Union
 
 # Gufo Labs modules
 from .socket import IPv4, IPv6, PingSocket, SelectionPolicy
@@ -81,8 +80,6 @@ class Ping(object):
                 print(rtt)
         ```
     """
-
-    request_id = itertools.count(random.randint(0, 0xFFFF))
 
     def __init__(
         self,
@@ -183,19 +180,16 @@ class Ping(object):
             self.__sockets[afi] = sock
         return sock
 
-    def __get_request_id(self) -> Tuple[int, int]:
+    def __get_seq(self) -> int:
         """
-        Get request id.
+        Get sequence.
 
-        Generate ICMP request id and starting
-        sequence number.
+        Generate ICMP starting sequence sequence number.
 
         Returns:
-            Tuple of (`request_id`, `sequence`)
+            Starting sequence number
         """
-        request_id = next(self.request_id) & 0xFFFF
-        seq = random.randint(0, 0xFFFF)
-        return request_id, seq
+        return random.randint(0, 0xFFFF)
 
     async def ping(
         self,
@@ -218,8 +212,8 @@ class Ping(object):
             * None - if failed or timed out.
         """
         sock = self.__get_socket(addr)
-        request_id, seq = self.__get_request_id()
-        return await sock.ping(addr, size=size, request_id=request_id, seq=seq)
+        seq = self.__get_seq()
+        return await sock.ping(addr, size=size, seq=seq)
 
     async def iter_rtt(
         self,
@@ -251,15 +245,13 @@ class Ping(object):
 
         """
         sock = self.__get_socket(addr)
-        request_id, seq = self.__get_request_id()
+        seq = self.__get_seq()
         t0 = 0.0
         n = 0
         while True:
             if interval:
                 t0 = perf_counter()
-            yield await sock.ping(
-                addr, size=size, request_id=request_id, seq=seq
-            )
+            yield await sock.ping(addr, size=size, seq=seq)
             seq = (seq + 1) & 0xFFFF
             if interval:
                 dt = perf_counter() - t0
