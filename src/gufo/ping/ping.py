@@ -8,7 +8,6 @@
 
 # Python modules
 import asyncio
-import random
 from time import perf_counter
 from typing import AsyncIterable, Dict, Iterable, Optional, Union
 
@@ -180,17 +179,6 @@ class Ping(object):
             self.__sockets[afi] = sock
         return sock
 
-    def __get_seq(self) -> int:
-        """
-        Get sequence.
-
-        Generate ICMP starting sequence sequence number.
-
-        Returns:
-            Starting sequence number
-        """
-        return random.randint(0, 0xFFFF)
-
     async def ping(
         self,
         addr: str,
@@ -212,8 +200,7 @@ class Ping(object):
             * None - if failed or timed out.
         """
         sock = self.__get_socket(addr)
-        seq = self.__get_seq()
-        return await sock.ping(addr, size=size, seq=seq)
+        return await sock.ping(addr, size=size)
 
     async def iter_rtt(
         self,
@@ -245,14 +232,12 @@ class Ping(object):
 
         """
         sock = self.__get_socket(addr)
-        seq = self.__get_seq()
         t0 = 0.0
         n = 0
         while True:
             if interval:
                 t0 = perf_counter()
-            yield await sock.ping(addr, size=size, seq=seq)
-            seq = (seq + 1) & 0xFFFF
+            yield await sock.ping(addr, size=size)
             if interval:
                 dt = perf_counter() - t0
                 if dt < interval:
