@@ -51,7 +51,7 @@ def test_policy(v: str, expected: SelectionPolicy) -> None:
 @pytest.mark.parametrize("xclass", [NotImplementedError, PermissionError])
 def test_probe_exceptions(xclass: type[BaseException]) -> None:
     class FaultyCli(Cli):
-        async def _run(self, *args, **kwargs):
+        async def _run(self, *args: str, **kwargs: str) -> ExitCode:
             raise xclass
 
     with pytest.raises(SystemExit):
