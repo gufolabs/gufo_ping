@@ -10,6 +10,8 @@ from typing import List
 # Third-party modules
 import pytest
 
+from gufo.ping import SelectionPolicy
+
 # Gufo Ping modules
 from gufo.ping.cli import Cli, ExitCode, main
 
@@ -31,3 +33,16 @@ def test_cli_error(args: List[str]) -> None:
 def test_cli_die() -> None:
     with pytest.raises(SystemExit):
         Cli.die("die!")
+
+
+@pytest.mark.parametrize(
+    ("v", "expected"),
+    [
+        ("raw", SelectionPolicy.RAW),
+        ("raw,dgram", SelectionPolicy.RAW_DGRAM),
+        ("dgram,raw", SelectionPolicy.DGRAM_RAW),
+        ("dgram", SelectionPolicy.DGRAM),
+    ],
+)
+def test_policy(v: str, expected: SelectionPolicy) -> None:
+    assert Cli._get_policy(v) == expected

@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: ICMPv4/ICMPv6 ping implementation
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 """
@@ -13,6 +13,7 @@ Attributes:
 
 # Gufo Labs modules
 from .ping import Ping
+from .socket import SelectionPolicy
 
 __version__: str = "0.6.0"
-__all__ = ["Ping", "__version__"]
+__all__ = ["Ping", "SelectionPolicy", "__version__"]

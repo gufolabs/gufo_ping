@@ -75,6 +75,8 @@ pub(crate) struct Proto {
     // Number of octets to skip when parsing response.
     // Set to IP header size if recv returns IP header.
     skip_reply: usize,
+    // Calculate checksum in user space
+    require_checksum: bool,
 }
 
 // Protocol configurations
@@ -82,10 +84,13 @@ pub(crate) struct Proto {
 #[derive(Clone)]
 enum ProtocolItem {
     IPv4Raw = 0,
-    IPv6Raw = 1,
+    IPv4Dgram = 1,
+    IPv6Raw = 2,
+    IPv6Dgram = 3,
 }
 
-static PROTOCOLS: [Proto; 2] = [
+const N_PROTOCOLS: usize = 4;
+static PROTOCOLS: [Proto; N_PROTOCOLS] = [
     // IPv4, RAW socket
     Proto {
         has_platform_support: true, // All POSIX platforms
@@ -100,6 +105,23 @@ static PROTOCOLS: [Proto; 2] = [
         icmp_request_type: 8,
         icmp_reply_type: 0,
         skip_reply: 20, // recv returns header.
+        require_checksum: true,
+    },
+    // IPv4, DGRAM
+    Proto {
+        #[cfg(target_os = "linux")]
+        has_platform_support: true,
+        #[cfg(not(target_os = "linux"))]
+        has_platform_support: false,
+        domain: Domain::IPV4,
+        ty: Type::DGRAM,
+        protocol: Protocol::ICMPV4,
+        filter: Filter::None,
+        ip_header_size: IPV4_HEADER_SIZE,
+        icmp_request_type: 8,
+        icmp_reply_type: 0,
+        skip_reply: 0,
+        require_checksum: false,
     },
     // IPv6, RAW Socket
     Proto {
@@ -115,10 +137,32 @@ static PROTOCOLS: [Proto; 2] = [
         icmp_request_type: 128,
         icmp_reply_type: 129,
         skip_reply: 0, // recv doesn't return header.
+        require_checksum: true,
+    },
+    // IPv6 DGRAM
+    Proto {
+        #[cfg(target_os = "linux")]
+        has_platform_support: true,
+        #[cfg(not(target_os = "linux"))]
+        has_platform_support: false,
+        domain: Domain::IPV6,
+        ty: Type::DGRAM,
+        protocol: Protocol::ICMPV6,
+        filter: Filter::None,
+        ip_header_size: IPV6_HEADER_SIZE,
+        icmp_request_type: 128,
+        icmp_reply_type: 129,
+        skip_reply: 0, // recv doesn't return header.
+        require_checksum: false,
     },
 ];
 
-static IS_AVAILABLE: [OnceLock<bool>; 2] = [OnceLock::new(), OnceLock::new()];
+static IS_AVAILABLE: [OnceLock<bool>; N_PROTOCOLS] = [
+    OnceLock::new(),
+    OnceLock::new(),
+    OnceLock::new(),
+    OnceLock::new(),
+];
 
 impl Proto {
     // Create proper socket
@@ -168,9 +212,11 @@ impl Proto {
         }
         // Calculate checksum
         // RFC-1071
-        let cs = checksum(buf);
-        buf[CHECKSUM_OFFSET] = cs[0];
-        buf[CHECKSUM_OFFSET + 1] = cs[1];
+        if self.require_checksum {
+            let cs = checksum(buf);
+            buf[CHECKSUM_OFFSET] = cs[0];
+            buf[CHECKSUM_OFFSET + 1] = cs[1];
+        }
         buf
     }
     // deserialize reply
@@ -282,13 +328,25 @@ impl SelectionPolicy {
     fn candidates(self) -> &'static [usize] {
         match self {
             SelectionPolicy::IPv4Raw => &[ProtocolItem::IPv4Raw as usize],
-            SelectionPolicy::IPv4RawDgram => &[ProtocolItem::IPv4Raw as usize],
-            SelectionPolicy::IPv4DgramRaw => &[ProtocolItem::IPv4Raw as usize],
-            SelectionPolicy::IPv4Dgram => &[],
+            SelectionPolicy::IPv4RawDgram => &[
+                ProtocolItem::IPv4Raw as usize,
+                ProtocolItem::IPv4Dgram as usize,
+            ],
+            SelectionPolicy::IPv4DgramRaw => &[
+                ProtocolItem::IPv4Dgram as usize,
+                ProtocolItem::IPv4Raw as usize,
+            ],
+            SelectionPolicy::IPv4Dgram => &[ProtocolItem::IPv4Dgram as usize],
             SelectionPolicy::IPv6Raw => &[ProtocolItem::IPv6Raw as usize],
-            SelectionPolicy::IPv6RawDgram => &[ProtocolItem::IPv6Raw as usize],
-            SelectionPolicy::IPv6DgramRaw => &[ProtocolItem::IPv6Raw as usize],
-            SelectionPolicy::IPv6Dgram => &[],
+            SelectionPolicy::IPv6RawDgram => &[
+                ProtocolItem::IPv6Raw as usize,
+                ProtocolItem::IPv6Dgram as usize,
+            ],
+            SelectionPolicy::IPv6DgramRaw => &[
+                ProtocolItem::IPv6Dgram as usize,
+                ProtocolItem::IPv6Raw as usize,
+            ],
+            SelectionPolicy::IPv6Dgram => &[ProtocolItem::IPv6Dgram as usize],
         }
     }
 
@@ -332,6 +390,11 @@ mod tests {
     const TEST_TIMESTAMP: u64 = 0x01020304;
 
     #[test]
+    fn test_settings() {
+        assert_eq!(PROTOCOLS.len(), IS_AVAILABLE.len());
+    }
+
+    #[test]
     fn test_selection_policy_try_from() {
         let expected = [
             SelectionPolicy::IPv4Raw,
@@ -368,13 +431,13 @@ mod tests {
         ];
         let expected = [
             vec![ProtocolItem::IPv4Raw],
-            vec![ProtocolItem::IPv4Raw],
-            vec![ProtocolItem::IPv4Raw],
-            vec![],
+            vec![ProtocolItem::IPv4Raw, ProtocolItem::IPv4Dgram],
+            vec![ProtocolItem::IPv4Dgram, ProtocolItem::IPv4Raw],
+            vec![ProtocolItem::IPv4Dgram],
             vec![ProtocolItem::IPv6Raw],
-            vec![ProtocolItem::IPv6Raw],
-            vec![ProtocolItem::IPv6Raw],
-            vec![],
+            vec![ProtocolItem::IPv6Raw, ProtocolItem::IPv6Dgram],
+            vec![ProtocolItem::IPv6Dgram, ProtocolItem::IPv6Raw],
+            vec![ProtocolItem::IPv6Dgram],
         ];
         for (p, e) in policies.iter().zip(expected.iter()) {
             let expected_indexes: Vec<usize> = e.iter().map(|x| x.clone() as usize).collect();
@@ -492,6 +555,108 @@ mod tests {
         assert!(probe.is_none())
     }
     #[test]
+    fn test_v4_dgram_encode1() {
+        const SIZE: usize = 44;
+        let proto = &PROTOCOLS[ProtocolItem::IPv4Dgram as usize];
+        let mut buf = get_buffer_mut();
+        let buf = proto.encode_request(
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            &mut buf,
+            SIZE,
+        );
+        assert_eq!(
+            buf,
+            &[
+                8, 0, 0, 0, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+            ]
+        )
+    }
+
+    #[test]
+    fn test_v4_dgram_encode2() {
+        const SIZE: usize = 64;
+        let proto = &PROTOCOLS[ProtocolItem::IPv4Dgram as usize];
+        let mut buf = get_buffer_mut();
+        let buf = proto.encode_request(
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            &mut buf,
+            SIZE,
+        );
+        assert_eq!(
+            buf,
+            &[
+                8, 0, 0, 0, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // Padding, 20x"A"
+            ]
+        )
+    }
+
+    #[test]
+    fn test_v4_dgram_decode1() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv4Dgram as usize];
+        let probe = proto
+            .decode_reply(&[
+                0, 0, 0, 0, // Type, Code, Checksum (faked)
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+            ])
+            .unwrap();
+        assert_eq!(probe.get_request_id(), TEST_REQUEST_ID);
+        assert_eq!(probe.get_seq(), TEST_SEQ);
+        assert_eq!(probe.get_signature(), TEST_SIGNATURE);
+        assert_eq!(probe.get_ts(), TEST_TIMESTAMP);
+    }
+    #[test]
+    fn test_v4_dgram_decode2() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv4Dgram as usize];
+        let probe = proto
+            .decode_reply(&[
+                0, 0, 0, 0, // Type, Code, Checksum (faked)
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // Padding, 20x"A"
+            ])
+            .unwrap();
+        assert_eq!(probe.get_request_id(), TEST_REQUEST_ID);
+        assert_eq!(probe.get_seq(), TEST_SEQ);
+        assert_eq!(probe.get_signature(), TEST_SIGNATURE);
+        assert_eq!(probe.get_ts(), TEST_TIMESTAMP);
+    }
+    #[test]
+    fn test_v4_dgram_decode_too_short() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv4Dgram as usize];
+        let probe = proto.decode_reply(&[
+            0, // IP header, faked
+            0, 0, 0, 0, // Type, Code, Checksum (faked)
+            0xBE, 0xEF, 0, 1, // Request id, sequence
+        ]);
+        assert!(probe.is_none());
+    }
+
+    #[test]
+    fn test_v4_dgram_decode_invalid_type() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv4Dgram as usize];
+        let probe = proto.decode_reply(&[
+            8, 0, 0, 0, // Type, Code, Checksum (faked)
+            0xBE, 0xEF, 0, 1, // Request id, sequence
+            0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+            0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+            0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+            0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // Padding, 20x"A"
+        ]);
+        assert!(probe.is_none())
+    }
+    #[test]
     fn test_v6_raw_encode1() {
         const SIZE: usize = 64;
         let proto = &PROTOCOLS[ProtocolItem::IPv6Raw as usize];
@@ -584,6 +749,106 @@ mod tests {
         let probe = proto.decode_reply(&[
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // IP header, faked
+            8, 0, 0, 0, // Type, Code, Checksum (faked)
+            0xBE, 0xEF, 0, 1, // Request id, sequence
+            0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+            0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+            0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+            0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // Padding, 20x"A"
+        ]);
+        assert!(probe.is_none())
+    }
+    #[test]
+    fn test_v6_dgram_encode1() {
+        const SIZE: usize = 64;
+        let proto = &PROTOCOLS[ProtocolItem::IPv6Dgram as usize];
+        let mut buf = get_buffer_mut();
+        let buf = proto.encode_request(
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            &mut buf,
+            SIZE,
+        );
+        assert_eq!(
+            buf,
+            &[
+                0x80, 0, 0, 0, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+            ]
+        )
+    }
+
+    #[test]
+    fn test_v6_dgram_encode2() {
+        const SIZE: usize = 84;
+        let proto = &PROTOCOLS[ProtocolItem::IPv6Dgram as usize];
+        let mut buf = get_buffer_mut();
+        let buf = proto.encode_request(
+            Probe::new(TEST_SEQ, TEST_SIGNATURE, TEST_TIMESTAMP),
+            &mut buf,
+            SIZE,
+        );
+        assert_eq!(
+            buf,
+            &[
+                0x80, 0, 0, 0, // Type, Code, Checksum
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // Padding, 20x"A"
+            ]
+        )
+    }
+
+    #[test]
+    fn test_v6_dgram_decode1() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv6Dgram as usize];
+        let probe = proto
+            .decode_reply(&[
+                0x81, 0, 0, 0, // Type, Code, Checksum (faked)
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+            ])
+            .unwrap();
+        assert_eq!(probe.get_request_id(), TEST_REQUEST_ID);
+        assert_eq!(probe.get_seq(), TEST_SEQ);
+        assert_eq!(probe.get_signature(), TEST_SIGNATURE);
+        assert_eq!(probe.get_ts(), TEST_TIMESTAMP);
+    }
+    #[test]
+    fn test_v6_dgram_decode2() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv6Dgram as usize];
+        let probe = proto
+            .decode_reply(&[
+                0x81, 0, 0, 0, // Type, Code, Checksum (faked)
+                0xBE, 0xEF, 0, 1, // Request id, sequence
+                0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature
+                0, 0, 0, 0, 1, 2, 3, 4, // Timestamp
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+                0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // Padding, 20x"A"
+            ])
+            .unwrap();
+        assert_eq!(probe.get_request_id(), TEST_REQUEST_ID);
+        assert_eq!(probe.get_seq(), TEST_SEQ);
+        assert_eq!(probe.get_signature(), TEST_SIGNATURE);
+        assert_eq!(probe.get_ts(), TEST_TIMESTAMP);
+    }
+    #[test]
+    fn test_v6_dgram_decode_too_short() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv6Dgram as usize];
+        let probe = proto.decode_reply(&[
+            0, // Short packet
+        ]);
+        assert!(probe.is_none());
+    }
+
+    #[test]
+    fn test_v6_dgram_decode_invalid_type() {
+        let proto = &PROTOCOLS[ProtocolItem::IPv6Dgram as usize];
+        let probe = proto.decode_reply(&[
             8, 0, 0, 0, // Type, Code, Checksum (faked)
             0xBE, 0xEF, 0, 1, // Request id, sequence
             0, 0, 0, 0, 0xDE, 0xAD, 0xBE, 0xEF, // Signature

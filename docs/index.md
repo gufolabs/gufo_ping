@@ -43,6 +43,9 @@ Gufo Ping is really fast, allowing to probe 100 000+ hosts at once.
 
 * Clean async API.
 * IPv4/IPv6 support.
+* RAW socket probes (POSIX platforms).
+* DGRAM socket probes (Linux only).
+* Preferable probe method autodetection.
 * High-performance.
 * Built with security in mind.
 * Full Python typing support.
