@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Command-line utility
 # ---------------------------------------------------------------------
-# Copyright (C) 2024-25, Gufo Labs
+# Copyright (C) 2024-26, Gufo Labs
 # See LICENSE.md for details
 # ---------------------------------------------------------------------
 """
@@ -15,13 +15,14 @@ Attributes:
 import argparse
 import asyncio
 import contextlib
+import os
 import signal
 import sys
 from enum import IntEnum
 from typing import List, NoReturn, Optional
 
 # Gufo Ping modules
-from gufo.ping import Ping
+from gufo.ping import Ping, SelectionPolicy
 
 NAME = "gufo-ping"
 MIN_SIZE = 64
@@ -73,6 +74,14 @@ class Cli(object):
             type=int,
             help="Packet size",
         )
+        parser.add_argument(
+            "-p",
+            "--policy",
+            type=str,
+            choices=["raw", "raw,dgram", "dgram,raw", "dgram"],
+            default=os.environ.get("GUFO_PING_POLICY", "") or "raw",
+            help="Probe policy",
+        )
         # Parse arguments
         ns = parser.parse_args(args)
         if ns.size is not None and ns.size < MIN_SIZE:
@@ -81,13 +90,22 @@ class Cli(object):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         main_task = loop.create_task(
-            self._run(ns.address[0], count=ns.count, size=ns.size)
+            self._run(
+                ns.address[0],
+                count=ns.count,
+                size=ns.size,
+                policy=self._get_policy(ns.policy),
+            )
         )
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, main_task.cancel)
         # Run
         try:
             return loop.run_until_complete(main_task)
+        except NotImplementedError:
+            self.die("Probe method is not supported")
+        except PermissionError:
+            self.die("Permission denied")
         finally:
             loop.close()
 
@@ -97,9 +115,10 @@ class Cli(object):
         address: str,
         count: Optional[int] = None,
         size: Optional[int] = None,
+        policy: SelectionPolicy = SelectionPolicy.RAW,
     ) -> ExitCode:
         size = size or MIN_SIZE
-        ping = Ping(size=size)
+        ping = Ping(size=size, policy=policy)
         n = 0
         sent = 0
         received = 0
@@ -126,6 +145,19 @@ class Cli(object):
             f"{loss:.1f}% packet loss"
         )
         return ExitCode.OK
+
+    @staticmethod
+    def _get_policy(v: str) -> SelectionPolicy:
+        """Get selection policy."""
+        return _POLICIES[v]
+
+
+_POLICIES = {
+    "raw": SelectionPolicy.RAW,
+    "raw,dgram": SelectionPolicy.RAW_DGRAM,
+    "dgram,raw": SelectionPolicy.DGRAM_RAW,
+    "dgram": SelectionPolicy.DGRAM,
+}
 
 
 def main(args: Optional[List[str]] = None) -> int:

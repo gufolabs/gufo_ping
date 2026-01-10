@@ -14,6 +14,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 
 ### Added
 
+* Datagram socket probe.
 * `SelectionPolicy` to select preferred probe method.
 
 ### Changed
