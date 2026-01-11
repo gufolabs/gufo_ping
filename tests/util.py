@@ -7,7 +7,7 @@
 # Python modules
 import socket
 from functools import cached_property
-from typing import Any, Dict, List
+from typing import Any
 
 
 class Caps(object):
@@ -53,7 +53,7 @@ class Caps(object):
         return not (self.has_ipv4 or self.has_ipv6)
 
     @cached_property
-    def loopbacks(self) -> List[str]:
+    def loopbacks(self) -> list[str]:
         """
         Get list of loopback addresses.
 
@@ -62,7 +62,7 @@ class Caps(object):
             allowed protocols. Empty if raw sockets are
             denied.
         """
-        r: List[str] = []
+        r: list[str] = []
         if self.has_ipv4:
             r.append("127.0.0.1")
         if self.has_ipv6:
@@ -70,7 +70,7 @@ class Caps(object):
         return r
 
 
-def as_str(v: Dict[str, Any]) -> str:
+def as_str(v: dict[str, Any]) -> str:
     """
     Format parameters for @parametrize(..., ids).
 

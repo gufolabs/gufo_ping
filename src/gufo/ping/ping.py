@@ -9,7 +9,7 @@
 # Python modules
 import asyncio
 from time import perf_counter
-from typing import AsyncIterable, Dict, Iterable, Optional, Union
+from typing import AsyncIterable, Iterable
 
 # Gufo Labs modules
 from .socket import IPv4, IPv6, PingSocket, SelectionPolicy
@@ -84,12 +84,12 @@ class Ping(object):
         self,
         policy: SelectionPolicy = SelectionPolicy.RAW,
         size: int = 64,
-        src_addr: Union[None, str, Iterable[str]] = None,
-        ttl: Optional[int] = None,
-        tos: Optional[int] = None,
+        src_addr: None | str | Iterable[str] = None,
+        ttl: int | None = None,
+        tos: int | None = None,
         timeout: float = 1.0,
-        send_buffer_size: Optional[int] = None,
-        recv_buffer_size: Optional[int] = None,
+        send_buffer_size: int | None = None,
+        recv_buffer_size: int | None = None,
         coarse: bool = False,
     ) -> None:
         self.__policy = policy
@@ -101,7 +101,7 @@ class Ping(object):
         self.__send_buffer_size = send_buffer_size
         self.__recv_buffer_size = recv_buffer_size
         self.__coarse = coarse
-        self.__sockets: Dict[int, PingSocket] = {}
+        self.__sockets: dict[int, PingSocket] = {}
 
     @staticmethod
     def _get_afi(address: str) -> int:
@@ -120,7 +120,7 @@ class Ping(object):
         return IPv4
 
     @staticmethod
-    def _get_src_addr(addr: Union[None, str, Iterable[str]]) -> Dict[int, str]:
+    def _get_src_addr(addr: None | str | Iterable[str]) -> dict[int, str]:
         """
         Parse source addresses.
 
@@ -141,7 +141,7 @@ class Ping(object):
             return {}
         if isinstance(addr, str):
             return {Ping._get_afi(addr): addr}
-        r: Dict[int, str] = {}
+        r: dict[int, str] = {}
         for a in addr:
             afi = Ping._get_afi(a)
             if afi not in r:
@@ -182,8 +182,8 @@ class Ping(object):
     async def ping(
         self,
         addr: str,
-        size: Optional[int] = None,
-    ) -> Optional[float]:
+        size: int | None = None,
+    ) -> float | None:
         """
         Do ping probe.
 
@@ -206,10 +206,10 @@ class Ping(object):
         self,
         addr: str,
         *,
-        size: Optional[int] = None,
-        interval: Optional[float] = 1.0,
-        count: Optional[int] = None,
-    ) -> AsyncIterable[Optional[float]]:
+        size: int | None = None,
+        interval: float | None = 1.0,
+        count: int | None = None,
+    ) -> AsyncIterable[float | None]:
         """
         Do the serie of ping probes.
 

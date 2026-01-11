@@ -19,7 +19,7 @@ import os
 import signal
 import sys
 from enum import IntEnum
-from typing import List, NoReturn, Optional
+from typing import NoReturn
 
 # Gufo Ping modules
 from gufo.ping import Ping, SelectionPolicy
@@ -44,13 +44,13 @@ class Cli(object):
     """`gufo-ping` utility class."""
 
     @classmethod
-    def die(cls, msg: Optional[str] = None) -> NoReturn:
+    def die(cls, msg: str | None = None) -> NoReturn:
         """Die with message."""
         if msg:
             print(msg)
         sys.exit(1)
 
-    def run(self, args: List[str]) -> ExitCode:
+    def run(self, args: list[str]) -> ExitCode:
         """
         Parse command-line arguments and run appropriate command.
 
@@ -113,8 +113,8 @@ class Cli(object):
         self,
         /,
         address: str,
-        count: Optional[int] = None,
-        size: Optional[int] = None,
+        count: int | None = None,
+        size: int | None = None,
         policy: SelectionPolicy = SelectionPolicy.RAW,
     ) -> ExitCode:
         size = size or MIN_SIZE
@@ -160,6 +160,6 @@ _POLICIES = {
 }
 
 
-def main(args: Optional[List[str]] = None) -> int:
+def main(args: list[str] | None = None) -> int:
     """Run `gufo-ping` with command-line arguments."""
     return Cli().run(sys.argv[1:] if args is None else args).value
