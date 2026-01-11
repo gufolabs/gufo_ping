@@ -1,11 +1,8 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Test Ping
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-25, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
-
-# Python modules
-from typing import List
 
 # Third-party modules
 import pytest
@@ -19,13 +16,13 @@ from gufo.ping.cli import Cli, ExitCode, main
 @pytest.mark.parametrize(
     "args", [["-c", "2", "127.0.0.1"], ["-c", "2", "192.0.2.1"]]
 )
-def test_cli(args: List[str]) -> None:
+def test_cli(args: list[str]) -> None:
     r = main(args)
     assert r == ExitCode.OK
 
 
 @pytest.mark.parametrize("args", [["-s", "10", "127.0.0.1"]])
-def test_cli_error(args: List[str]) -> None:
+def test_cli_error(args: list[str]) -> None:
     with pytest.raises(SystemExit):
         main(args)
 

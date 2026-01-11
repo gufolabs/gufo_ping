@@ -1,12 +1,12 @@
 # ---------------------------------------------------------------------
 # Gufo Ping: Test Ping
 # ---------------------------------------------------------------------
-# Copyright (C) 2022-23, Gufo Labs
+# Copyright (C) 2022-26, Gufo Labs
 # ---------------------------------------------------------------------
 
 # Python modules
 import asyncio
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Iterable
 
 # Third-party modules
 import pytest
@@ -54,8 +54,8 @@ def test_ping(address: str, expected: bool) -> None:
     ],
 )
 def test_iter_rtt(address: str, expected: bool) -> None:
-    async def inner() -> List[Optional[float]]:
-        r: List[Optional[float]] = []
+    async def inner() -> list[float | None]:
+        r: list[float | None] = []
         async for rtt in ping.iter_rtt(address, count=N_PROBES):
             r.append(rtt)
         return r
@@ -102,7 +102,7 @@ def test_iter_rtt(address: str, expected: bool) -> None:
     ids=as_str,
 )
 def test_valid_ping_settings(
-    addr: str, cfg: Dict[str, Any], expected: bool
+    addr: str, cfg: dict[str, Any], expected: bool
 ) -> None:
     if expected:
         asyncio.run(Ping(**cfg).ping(addr))
@@ -128,7 +128,7 @@ def test_valid_ping_settings(
     ids=as_str,
 )
 def test_src_addr(
-    src_addr: Union[None, str, Iterable[str]], expected: Dict[int, str]
+    src_addr: None | str | Iterable[str], expected: dict[int, str]
 ) -> None:
     assert Ping._get_src_addr(src_addr) == expected
 

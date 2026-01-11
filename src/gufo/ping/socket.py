@@ -16,7 +16,7 @@ Attributes:
 from asyncio import Future, TimerHandle, get_running_loop
 from contextlib import suppress
 from enum import IntEnum
-from typing import Dict, Optional, cast
+from typing import cast
 
 # Gufo Labs modules
 from ._fast import (
@@ -95,12 +95,12 @@ class PingSocket(object):
         afi: int = IPv4,
         policy: SelectionPolicy = SelectionPolicy.RAW,
         size: int = 64,
-        src_addr: Optional[str] = None,
-        ttl: Optional[int] = None,
-        tos: Optional[int] = None,
+        src_addr: str | None = None,
+        ttl: int | None = None,
+        tos: int | None = None,
         timeout: float = 1.0,
-        send_buffer_size: Optional[int] = None,
-        recv_buffer_size: Optional[int] = None,
+        send_buffer_size: int | None = None,
+        recv_buffer_size: int | None = None,
         coarse: bool = False,
     ) -> None:
         if afi not in self.VALID_AFI:
@@ -139,10 +139,10 @@ class PingSocket(object):
             self.__sock.set_recv_buffer_size(recv_buffer_size)
         self.__sock_fd = self.__sock.get_fd()
         #  session id -> future
-        self.__sessions: Dict[int, Future[Optional[float]]] = {}
+        self.__sessions: dict[int, Future[float | None]] = {}
         # Install response reader
         get_running_loop().add_reader(self.__sock_fd, self._on_read)
-        self._timeout_handler: Optional[TimerHandle] = None
+        self._timeout_handler: TimerHandle | None = None
         self.__timeout = timeout
 
     def __del__(self) -> None:
@@ -167,8 +167,8 @@ class PingSocket(object):
     async def ping(
         self,
         addr: str,
-        size: Optional[int] = None,
-    ) -> Optional[float]:
+        size: int | None = None,
+    ) -> float | None:
         """
         Send ICMP echo request and await for result.
 
@@ -187,7 +187,7 @@ class PingSocket(object):
             # when cannot find the route. Treat them as losses.
             return None
         # Install future in the sessions
-        fut: Future[Optional[float]] = get_running_loop().create_future()
+        fut: Future[float | None] = get_running_loop().create_future()
         self.__sessions[sid] = fut
         # Trigger timeout handler when necessary
         if not self._timeout_handler:

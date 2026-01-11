@@ -10,7 +10,6 @@ import time
 from multiprocessing import cpu_count
 from queue import Queue
 from threading import Thread
-from typing import List
 
 from gufo.ping import Ping
 
@@ -74,7 +73,7 @@ def main(path: str) -> None:
         w.join()
 
 
-def worker(data: List[str], result_queue: Queue) -> None:
+def worker(data: list[str], result_queue: Queue) -> None:
     """
     Thread worker, started within every thread.
 
@@ -92,7 +91,7 @@ def worker(data: List[str], result_queue: Queue) -> None:
     loop.close()
 
 
-async def async_worker(data: List[str], result_queue: Queue) -> None:
+async def async_worker(data: list[str], result_queue: Queue) -> None:
     """
     Asynchronous worker. Started for each thread.
 

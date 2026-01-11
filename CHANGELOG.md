@@ -20,6 +20,7 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Changed
 
 * Rust implemenation how handles request ids and sequence number internally.
+* Deprecated typing declarations are removed.
 
 ### Removed
 

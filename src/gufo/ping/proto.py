@@ -7,7 +7,7 @@
 """SocketWrapper protocol definition."""
 
 # Python modules
-from typing import Dict, Optional, Protocol
+from typing import Protocol
 
 
 class SocketProto(Protocol):
@@ -104,7 +104,7 @@ class SocketProto(Protocol):
             session id.
         """
 
-    def recv(self) -> Optional[Dict[int, float]]:
+    def recv(self) -> dict[int, float] | None:
         """
         Receive all awaiting packets.
 
