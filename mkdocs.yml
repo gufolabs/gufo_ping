@@ -13,6 +13,7 @@ nav:
       - Overview: examples/index.md
       - Single Request: examples/single.md
       - Series of Requests: examples/series.md
+      - Using DGRAM socket: examples/dgram.md
   - Reference: reference/
   - Developers' Guide:
       - Overview: dev/index.md
@@ -60,6 +61,7 @@ watch:
   - docs/
   - src/gufo/
   - examples/
+  - mkdocs.yml
 plugins:
   - search
   - gen-files:
