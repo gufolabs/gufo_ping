@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import time
 
 from gufo.ping import Ping, SelectionPolicy
