@@ -1,12 +1,16 @@
 import asyncio
-import sys
 import time
 
-from gufo.ping import Ping
+from gufo.ping import Ping, SelectionPolicy
 
 
-async def main(address: str, size: int = 64, count: int = 4) -> None:
-    ping = Ping(size=size)
+async def main(
+    address: str,
+    size: int = 64,
+    count: int = 4,
+    policy: SelectionPolicy | None = None,
+) -> None:
+    ping = Ping(size=size, policy=policy or SelectionPolicy.RAW)
     t0 = time.time()
     print(f"PING {address}: {size} bytes, {count} packets")
     received = 0
@@ -25,4 +29,29 @@ async def main(address: str, size: int = 64, count: int = 4) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main(sys.argv[1], count=100_000))
+    import argparse
+
+    POLICY_MAP = {
+        "raw": SelectionPolicy.RAW,
+        "dgram": SelectionPolicy.DGRAM,
+        "raw,dgram": SelectionPolicy.RAW_DGRAM,
+        "dgram,raw": SelectionPolicy.DGRAM_RAW,
+    }
+    parser = argparse.ArgumentParser(
+        prog="bench-flood", description="Flood ping benchmark"
+    )
+    parser.add_argument(
+        "-p",
+        "--policy",
+        choices=list(POLICY_MAP),
+        default="dgram,raw",
+        help="Probe selection policy",
+    )
+    parser.add_argument(
+        "-c", "--count", type=int, default=100_000, help="Packets count"
+    )
+    parser.add_argument("address", nargs=1, help="Address")
+    ns = parser.parse_args()
+    asyncio.run(
+        main(ns.address[0], count=ns.count, policy=POLICY_MAP[ns.policy])
+    )
