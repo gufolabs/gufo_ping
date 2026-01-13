@@ -5,10 +5,9 @@
 // ---------------------------------------------------------------------
 
 use crate::{Probe, Proto, SelectionPolicy, SessionManager, Timer, slice};
-use pyo3::{exceptions::PyOSError, prelude::*};
+use pyo3::{exceptions::PyOSError, prelude::*, types::PyDict};
 use socket2::{SockAddr, Socket};
 use std::{
-    collections::HashMap,
     mem::MaybeUninit,
     net::SocketAddr,
     ops::Not,
@@ -134,8 +133,8 @@ impl SocketWrapper {
 
     /// Receive all pending icmp echo replies.
     /// Returns dict of <session id> -> rtt
-    fn recv(&mut self) -> PyResult<Option<HashMap<u64, u64>>> {
-        let mut r = HashMap::<u64, u64>::new();
+    fn recv<'a>(&mut self, py: Python<'a>) -> PyResult<Option<Bound<'a, PyDict>>> {
+        let r = PyDict::new(py);
         let ts = self.timer.get_ts();
         // Rewrite when recvmmsg function will be available.
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
@@ -151,13 +150,13 @@ impl SocketWrapper {
                     1 // Minimal delay
                 };
                 let sid = self.get_sid(&addr, pkt.get_request_id(), pkt.get_seq());
-                r.insert(sid, delay);
+                r.set_item(sid, delay)?;
                 self.sessions.remove(sid, pkt_ts + self.timeout);
             }
         }
         // Check for expired sessions
         for sid in self.sessions.drain_expired(ts) {
-            r.insert(sid, REQUEST_TIMEOUT);
+            r.set_item(sid, REQUEST_TIMEOUT)?;
         }
         Ok(r.is_empty().not().then_some(r))
     }
