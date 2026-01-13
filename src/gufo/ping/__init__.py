@@ -15,5 +15,5 @@ Attributes:
 from .ping import Ping
 from .socket import SelectionPolicy
 
-__version__: str = "0.6.0"
+__version__: str = "0.7.0"
 __all__ = ["Ping", "SelectionPolicy", "__version__"]
