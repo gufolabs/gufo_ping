@@ -138,7 +138,7 @@ impl SocketWrapper {
         let ts = self.timer.get_ts();
         // Rewrite when recvmmsg function will be available.
         while let Ok((size, addr)) = self.io.recv_from(&mut self.buf) {
-            let buf = slice::slice_assume_init_ref(&self.buf[..size]);
+            let buf = unsafe { self.buf[..size].assume_init_ref() };
             if let Some(pkt) = self.proto.decode_reply(buf)
                 && pkt.get_signature() == self.signature
             {
