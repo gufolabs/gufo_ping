@@ -26,8 +26,17 @@ jobs:
   py-lint:
     runs-on: ubuntu-24.04
     steps:
+      - name: Setup Environment
+        run: |
+          echo "CARGO_HOME=${HOME}/.cargo" >> $GITHUB_ENV
+          echo "RUSTUP_HOME=${HOME}/.rustup" >> $GITHUB_ENV
+          echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
+
       - name: Checkout Repo
         uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: ./tools/build/setup-rust.sh
 
       - name: Set Up Python {{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -102,6 +111,9 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
+      - name: Install Rust
+        run: ./tools/build/setup-rust.sh
+
       - name: Set Up Python {{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -156,6 +168,9 @@ jobs:
 
       - name: Checkout Repo
         uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: ./tools/build/setup-rust.sh
 
       - name: Set Up Python {{ matrix.python-version }}
         uses: actions/setup-python@v5

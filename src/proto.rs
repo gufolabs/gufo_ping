@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 // Copyright (C) 2022-26, Gufo Labs
 // ---------------------------------------------------------------------
-use crate::{PingError, PingResult, filter::Filter, slice};
+use crate::{PingError, PingResult, filter::Filter};
 use byteorder::{BigEndian, ByteOrder};
 use internet_checksum::checksum;
 use rand::Rng;
@@ -190,7 +190,7 @@ impl Proto {
         size: usize,
     ) -> &'a [u8] {
         let size = size - self.ip_header_size; // Adjust to packet header
-        let buf = slice::slice_assume_init_mut(&mut buf[..size]);
+        let buf = unsafe { buf[..size].assume_init_mut() };
         // Write:
         // * type
         // * Zeroes in code and checksum place
