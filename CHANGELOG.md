@@ -15,6 +15,8 @@ To see unreleased changes, please see the [CHANGELOG on the main branch guide](h
 ### Infrastructure
 
 * Rust 1.93.0
+* setuptools-rust 1.12
+* setuptools 80.10
 
 ## 0.7.0 - 2026-01-13
 
